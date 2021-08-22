@@ -1,19 +1,16 @@
-#include <iostream>
-
 #include <ceres/ceres.h>
-
 #include <gcs/constraints/constraints2d_unsigned.h>
-#include <gcs/solver/solve_elements.h>
 #include <gcs/geometry/geometry.h>
 #include <gcs/problems/problem.h>
 #include <gcs/problems/problem1.h>
+#include <gcs/solver/solve_elements.h>
+
+#include <iostream>
 
 //#include <gcs/geometry/geometry.h>
 
-
-int main(int argc, char** argv)
-{
-    //std::cout << x << std::endl;
+int main(int argc, char** argv) {
+    // std::cout << x << std::endl;
 
     problems::Problem p1 = problems::problem1();
 
@@ -21,8 +18,7 @@ int main(int argc, char** argv)
 
     std::cout << "=====" << std::endl;
 
-    for (auto& eqn : p1.eqns)
-    {
+    for (auto& eqn : p1.eqns) {
         eqn_set.add_equation(eqn.second);
 
         std::cout << eqn.first << ": ";
@@ -39,12 +35,10 @@ int main(int argc, char** argv)
     std::cout << "Final DOF: " << eqn_set.degrees_of_freedom() << std::endl;
     std::cout << "=====" << std::endl;
 
-    for (auto& var : p1.vars)
-    {
+    for (auto& var : p1.vars) {
         std::cout << var.first << ": ";
 
-        for (auto& eqn : var.second.equations)
-        {
+        for (auto& eqn : var.second.equations) {
             std::cout << p1.eqn_names.at(eqn) << ", ";
         }
 
@@ -83,7 +77,6 @@ int main(int argc, char** argv)
             std::cout << p1.var_names.at(var) << ", ";
         }
         std::cout << std::endl;
-        
 
         std::cout << "vars solved for: ";
         for (auto& var : eqn_set.get_variables()) {
@@ -109,52 +102,52 @@ int main(int argc, char** argv)
 
     // Constraints
 
-    auto x_test = constraints2d_unsigned::distance<double>(1.0, 2.0, 3.0, 4.0, 2.0);
+    auto x_test =
+        constraints2d_unsigned::distance<double>(1.0, 2.0, 3.0, 4.0, 2.0);
     std::cout << x_test << std::endl;
 
     // Ceres Test
 
     namespace cstr = constraints2d_unsigned;
 
-    //google::InitGoogleLogging(argv[0]);
+    // google::InitGoogleLogging(argv[0]);
 
     double x1 = 1.0;
     double y1 = 1.0;
     double x2 = 2.0;
     double y2 = 2.0;
-    double d  = 1.5;
+    double d = 1.5;
 
     ceres::Problem problem{};
 
     problem.AddResidualBlock(
         cstr::create_scalar_autodiff(new cstr::distance_functor{}),
         nullptr,
-        &x1, &y1, &x2, &y2, &d
-    );
+        &x1,
+        &y1,
+        &x2,
+        &y2,
+        &d);
 
     problem.AddResidualBlock(
-        cstr::create_scalar_autodiff(new cstr::set_const_functor{ 1.0 }),
+        cstr::create_scalar_autodiff(new cstr::set_const_functor{1.0}),
         nullptr,
-        &x1
-    );
+        &x1);
 
     problem.AddResidualBlock(
-        cstr::create_scalar_autodiff(new cstr::set_const_functor{ 2.0 }),
+        cstr::create_scalar_autodiff(new cstr::set_const_functor{2.0}),
         nullptr,
-        &y1
-    );
+        &y1);
 
     problem.AddResidualBlock(
-        cstr::create_scalar_autodiff(new cstr::set_const_functor{ 3.0 }),
+        cstr::create_scalar_autodiff(new cstr::set_const_functor{3.0}),
         nullptr,
-        &x2
-    );
+        &x2);
 
     problem.AddResidualBlock(
-        cstr::create_scalar_autodiff(new cstr::set_const_functor{ 4.0 }),
+        cstr::create_scalar_autodiff(new cstr::set_const_functor{4.0}),
         nullptr,
-        &y2
-    );
+        &y2);
 
     ceres::Solver::Options options{};
     options.linear_solver_type = ceres::LinearSolverType::DENSE_QR;
@@ -168,5 +161,5 @@ int main(int argc, char** argv)
     std::cout << "y1: " << y1 << std::endl;
     std::cout << "x2: " << x2 << std::endl;
     std::cout << "y2: " << y2 << std::endl;
-    std::cout << "d:  " << d  << std::endl;
+    std::cout << "d:  " << d << std::endl;
 }

@@ -1,8 +1,6 @@
 #include <gcs/solver/solve_elements.h>
 
-
 namespace GCS {
-
 
 std::vector<EquationSet> split(EquationSet& equation_set) {
     // set of split up equation sets - this will be returned
@@ -13,14 +11,13 @@ std::vector<EquationSet> split(EquationSet& equation_set) {
 
     // priority queue where pop returns the equation set
     // that is "closest" to being solvable
-    std::priority_queue<
-        EquationSet,
-        std::vector<EquationSet>,
-        EquationSet::Compare
-    > pq{};
+    std::priority_queue<EquationSet,
+                        std::vector<EquationSet>,
+                        EquationSet::Compare>
+        pq{};
 
     // unconstrained equation set of leftover equations
-    EquationSet unconstrained_equation_set{ equation_set.equations };
+    EquationSet unconstrained_equation_set{equation_set.equations};
 
     // initialize the pq with single-equation sets
     for (auto& eqn : equation_set.equations) {
@@ -64,7 +61,8 @@ std::vector<EquationSet> split(EquationSet& equation_set) {
 
             // move this set to solve sets
             current_equation_set.set_solved();
-            solve_sets.push_back(std::move(current_equation_set)); // TODO: note move happening here
+            solve_sets.push_back(std::move(
+                current_equation_set));  // TODO: note move happening here
 
             // repopulate the pq
             for (auto& eqn_set : temp_eqn_sets) {
@@ -73,8 +71,7 @@ std::vector<EquationSet> split(EquationSet& equation_set) {
 
             // reset visited equation sets
             visited_equation_sets.clear();
-        }
-        else {
+        } else {
             // add all equation sets in the frontier to the pq
             for (auto& eqn_set : current_equation_set.frontier()) {
                 auto result = visited_equation_sets.insert(std::move(eqn_set));
@@ -90,7 +87,8 @@ std::vector<EquationSet> split(EquationSet& equation_set) {
 
     // only add the unconstrained set if it isn't empty
     // TODO: break up into smaller independent groups (?)
-    // TODO: unconstrained set could be last thing popped from pq (unless move happened last)
+    // TODO: unconstrained set could be last thing popped from pq (unless move
+    // happened last)
     if (!unconstrained_equation_set.equations.empty()) {
         solve_sets.push_back(std::move(unconstrained_equation_set));
     }
@@ -98,5 +96,4 @@ std::vector<EquationSet> split(EquationSet& equation_set) {
     return solve_sets;
 }
 
-
-} // namespace GCS
+}  // namespace GCS

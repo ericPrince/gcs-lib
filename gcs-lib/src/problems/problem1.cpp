@@ -1,23 +1,19 @@
+#include <gcs/problems/problem1.h>
+#include <gcs/solver/solve_elements.h>
+
 #include <cassert>
 #include <map>
 #include <string>
-#include <vector>
 #include <unordered_set>
+#include <vector>
 
-#include <gcs/solver/solve_elements.h>
-#include <gcs/problems/problem1.h>
+namespace problems {
 
-
-namespace problems
-{
-
-
-Problem problem1()
-{
+Problem problem1() {
     Problem problem;
 
-    std::string var_names[] =
-    {
+    // clang-format off
+    std::string var_names[] = {
         "p0.x",
         "p0.y",
         "p1.x",
@@ -39,8 +35,7 @@ Problem problem1()
         "dy"
     };
 
-    std::map<std::string, std::vector<std::string>> eqn_map =
-    {
+    std::map<std::string, std::vector<std::string>> eqn_map = {
         { "f.01", { "p0.x" } }, // f1  = g2d.SetVar('f1', p0.x, 0.0)
         { "f.02", { "p0.y" } }, // f2  = g2d.SetVar('f2', p0.y, 0.0)
         { "f.03", { "c1.r" } }, // f3  = g2d.SetVar('f3', c1.r, r0)
@@ -61,35 +56,31 @@ Problem problem1()
         { "f.18", { "dx" } }, // f18 = g2d.SetVar('f18', dx, d_x)
         { "f.19", { "dy" } }, // f19 = g2d.SetVar('f19', dy, d_y)
     };
+    // clang-format on
 
     // create vars for each name
-    for (const auto& name : var_names)
-    {
+    for (const auto& name : var_names) {
         problem.vars.emplace(name, GCS::Variable{});
         problem.var_names.emplace(&problem.vars.at(name), name);
     }
 
     // create eqns for each name and give the vars required for that eqn
-    for (const auto& eqn : eqn_map)
-    {
+    for (const auto& eqn : eqn_map) {
         std::unordered_set<GCS::Variable*> eqn_vars;
 
-        for (const auto& var_name : eqn.second)
-        {
+        for (const auto& var_name : eqn.second) {
             assert(problem.vars.find(var_name) != problem.vars.end());
 
             eqn_vars.insert(&problem.vars.at(var_name));
         }
 
-        problem.eqns.emplace(eqn.first, GCS::Equation{ std::move(eqn_vars) });
+        problem.eqns.emplace(eqn.first, GCS::Equation{std::move(eqn_vars)});
         problem.eqn_names.emplace(&problem.eqns.at(eqn.first), eqn.first);
     }
 
     // check for validity
-    for (auto& var : problem.vars)
-    {
-        for (auto& eqn : var.second.equations)
-        {
+    for (auto& var : problem.vars) {
+        for (auto& eqn : var.second.equations) {
             assert(problem.eqn_names.find(eqn) != problem.eqn_names.end());
         }
     }
@@ -97,5 +88,4 @@ Problem problem1()
     return problem;
 }
 
-
-} // namespace problems
+}  // namespace problems
