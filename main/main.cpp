@@ -187,145 +187,31 @@ int main(int argc, char** argv) {
     GCS::Variable dx = 2.0;
     GCS::Variable dy = 1.0;
 
-    namespace cstr = constraints2d_unsigned;
+    std::vector<GCS::Constraint*> constraints = {};
 
-    // f1
-    prb2.AddResidualBlock(
-        cstr::create_scalar_autodiff(new cstr::set_const_functor{0.0}),
-        nullptr,
-        &p0.x.value);
+    constraints.push_back(new GCS::SetConstant{p1.x, 0.0});            // f1
+    constraints.push_back(new GCS::SetConstant{p1.y, 0.0});            // f2
+    constraints.push_back(new GCS::SetConstant{c1.r, r0});             // f3
+    constraints.push_back(new GCS::SetConstant{d1, d});                // f4
+    constraints.push_back(new GCS::SetConstant{a1, a});                // f5
+    constraints.push_back(new GCS::Equate{p0.x, c1.p.x});              // f6
+    constraints.push_back(new GCS::Equate{p0.y, c1.p.y});              // f7
+    constraints.push_back(new GCS::Difference{p0.x, p1.x, dx});        // f8
+    constraints.push_back(new GCS::Difference{p0.y, p1.y, dy});        // f9
+    constraints.push_back(new GCS::AngleThreePoints{p1, p3, p2, a1});  // f10
+    constraints.push_back(new GCS::TangentLineCircle{L1, c1});         // f11
+    constraints.push_back(new GCS::PointOnCircle{p3, c1});             // f12
+    constraints.push_back(new GCS::Equate{L1.p1.x, p3.x});             // f13
+    constraints.push_back(new GCS::Equate{L1.p1.y, p3.y});             // f14
+    constraints.push_back(new GCS::LineLength{L1, d1});                // f15
+    constraints.push_back(new GCS::Equate{L1.p2.x, p2.x});             // f16
+    constraints.push_back(new GCS::Equate{L1.p2.y, p2.y});             // f17
+    constraints.push_back(new GCS::SetConstant{dx, d_x});              // f18
+    constraints.push_back(new GCS::SetConstant{dy, d_y});              // f19
 
-    // f2
-    prb2.AddResidualBlock(
-        cstr::create_scalar_autodiff(new cstr::set_const_functor{0.0}),
-        nullptr,
-        &p0.y.value);
-
-    // f3
-    prb2.AddResidualBlock(
-        cstr::create_scalar_autodiff(new cstr::set_const_functor{r0}),
-        nullptr,
-        &c1.r.value);
-
-    // f4
-    prb2.AddResidualBlock(
-        cstr::create_scalar_autodiff(new cstr::set_const_functor{d}),
-        nullptr,
-        &d1.value);
-
-    // f5
-    prb2.AddResidualBlock(
-        cstr::create_scalar_autodiff(new cstr::set_const_functor{a}),
-        nullptr,
-        &a1.value);
-
-    // f67
-    prb2.AddResidualBlock(
-        cstr::create_scalar_autodiff(new cstr::equate_functor{}),
-        nullptr,
-        &p0.x.value,
-        &c1.p.x.value);
-    prb2.AddResidualBlock(
-        cstr::create_scalar_autodiff(new cstr::equate_functor{}),
-        nullptr,
-        &p0.y.value,
-        &c1.p.y.value);
-
-    // f8
-    prb2.AddResidualBlock(
-        cstr::create_scalar_autodiff(new cstr::difference_functor{}),
-        nullptr,
-        &p0.x.value,
-        &p1.x.value,
-        &dx.value);
-
-    // f9
-    prb2.AddResidualBlock(
-        cstr::create_scalar_autodiff(new cstr::difference_functor{}),
-        nullptr,
-        &p0.y.value,
-        &p1.y.value,
-        &dy.value);
-
-    // f10
-    prb2.AddResidualBlock(
-        cstr::create_scalar_autodiff(new cstr::angle_point_3_functor{}),
-        nullptr,
-        &p1.x.value,
-        &p1.y.value,
-        &p3.x.value,
-        &p3.y.value,
-        &p2.x.value,
-        &p2.y.value,
-        &a1.value);
-
-    // f11
-    prb2.AddResidualBlock(
-        cstr::create_scalar_autodiff(new cstr::tangent_line_circle_functor{}),
-        nullptr,
-        &L1.p1.x.value,
-        &L1.p1.y.value,
-        &L1.p2.x.value,
-        &L1.p2.y.value,
-        &c1.p.x.value,
-        &c1.p.y.value,
-        &c1.r.value);
-
-    // f12
-    prb2.AddResidualBlock(
-        cstr::create_scalar_autodiff(new cstr::point_on_circle_functor{}),
-        nullptr,
-        &p3.x.value,
-        &p3.y.value,
-        &c1.p.x.value,
-        &c1.p.y.value,
-        &c1.r.value);
-
-    // f1314
-    prb2.AddResidualBlock(
-        cstr::create_scalar_autodiff(new cstr::equate_functor{}),
-        nullptr,
-        &L1.p1.x.value,
-        &p3.x.value);
-    prb2.AddResidualBlock(
-        cstr::create_scalar_autodiff(new cstr::equate_functor{}),
-        nullptr,
-        &L1.p1.y.value,
-        &p3.y.value);
-
-    // f15
-    prb2.AddResidualBlock(
-        cstr::create_scalar_autodiff(new cstr::line_length_functor{}),
-        nullptr,
-        &L1.p1.x.value,
-        &L1.p1.y.value,
-        &L1.p2.x.value,
-        &L1.p2.y.value,
-        &d1.value);
-
-    // f1617
-    prb2.AddResidualBlock(
-        cstr::create_scalar_autodiff(new cstr::equate_functor{}),
-        nullptr,
-        &L1.p2.x.value,
-        &p2.x.value);
-    prb2.AddResidualBlock(
-        cstr::create_scalar_autodiff(new cstr::equate_functor{}),
-        nullptr,
-        &L1.p2.y.value,
-        &p2.y.value);
-
-    // f18
-    prb2.AddResidualBlock(
-        cstr::create_scalar_autodiff(new cstr::set_const_functor{d_x}),
-        nullptr,
-        &dx.value);
-
-    // f19
-    prb2.AddResidualBlock(
-        cstr::create_scalar_autodiff(new cstr::set_const_functor{d_y}),
-        nullptr,
-        &dy.value);
+    for (auto& constraint : constraints) {
+        constraint->add_cost_function(prb2);
+    }
 
     ceres::Solver::Options options{};
     options.linear_solver_type = ceres::LinearSolverType::DENSE_QR;
