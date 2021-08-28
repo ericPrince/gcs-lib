@@ -4,6 +4,8 @@ namespace GCS {
 
 // Variable
 
+Variable::Variable(double value) : value{value}, equations{} {}
+
 void Variable::set_solved() {
     for (auto& eqn : this->equations) {
         // remove this variable from all equations

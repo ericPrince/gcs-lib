@@ -18,7 +18,11 @@ struct Equation;
 struct EquationSet;
 
 struct Variable {
+    double value;
     std::unordered_set<Equation*> equations;
+
+    Variable() = default;
+    Variable(double value);
 
     void set_solved();
 };

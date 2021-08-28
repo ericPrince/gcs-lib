@@ -75,7 +75,7 @@ T difference(const T& x1, const T& x2, const T& d) {
     return ceres::abs(x1 - x2) - d;
 }
 
-CSTR_CREATE_FUNCTOR_(difference, 5);
+CSTR_CREATE_FUNCTOR_(difference, 3);
 
 //! @brief Constrain a point to lie on a line
 //! @note (x3, y3) is the point
