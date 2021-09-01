@@ -4,7 +4,6 @@
 
 #include <iostream>
 
-//#include <gcs/geometry/geometry.h>
 
 int main(int argc, char** argv) {
     const double r0 = 1.5;
