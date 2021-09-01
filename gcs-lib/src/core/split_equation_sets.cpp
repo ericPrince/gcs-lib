@@ -1,6 +1,9 @@
-#include <gcs/solver/solve_elements.h>
+#include <gcs/core/solve_elements.h>
+#include <gcs/core/split_equation_sets.h>
 
-namespace GCS {
+#include <vector>
+
+namespace gcs {
 
 std::vector<EquationSet> split(EquationSet& equation_set) {
     // set of split up equation sets - this will be returned
@@ -96,4 +99,4 @@ std::vector<EquationSet> split(EquationSet& equation_set) {
     return solve_sets;
 }
 
-}  // namespace GCS
+}  // namespace gcs

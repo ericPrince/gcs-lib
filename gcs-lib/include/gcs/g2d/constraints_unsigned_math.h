@@ -1,57 +1,10 @@
-#ifndef CONSTRAINTS2D_UNSIGNED_H_
-#define CONSTRAINTS2D_UNSIGNED_H_
+#ifndef GCS_LIB_INCLUDE_GCS_G2D_CONSTRAINTS_UNSIGNED_MATH
+#define GCS_LIB_INCLUDE_GCS_G2D_CONSTRAINTS_UNSIGNED_MATH
 
 #include <ceres/ceres.h>
+#include <gcs/core/constraints.h>
 
-#include <boost/preprocessor.hpp>
-#include <cmath>
-#include <metal.hpp>
-
-#ifndef CSTR_CREATE_FUNCTOR_
-#define CSTR_CREATE_FUNCTOR_(func, n)                          \
-    struct func##_functor {                                    \
-        static const metal::int_ num_params = n;               \
-                                                               \
-        template <typename T>                                  \
-        bool operator()(BOOST_PP_ENUM_PARAMS(n, const T* x)    \
-                            BOOST_PP_COMMA_IF(n) T* r) const { \
-            *r = func(BOOST_PP_ENUM_PARAMS(n, *x));            \
-            return true;                                       \
-        }                                                      \
-    };
-#endif
-
-namespace constraints2d_unsigned {
-
-// TODO: put in namespace detail (put other func in constraints namespace)
-template <typename Functor, typename... Args>
-ceres::CostFunction* create_ad_impl_(Functor* functor, metal::list<Args...>) {
-    return new ceres::AutoDiffCostFunction<Functor, Args::value...>(functor);
-}
-
-template <typename Functor>
-ceres::CostFunction* create_scalar_autodiff(Functor* functor) {
-    using param_list =
-        metal::repeat<metal::number<1>, metal::number<Functor::num_params + 1>>;
-
-    return create_ad_impl_(functor, param_list{});
-}
-
-//---------------------------
-// Basic constraints
-//---------------------------
-
-struct set_const_functor {
-    double const_value;
-
-    static const metal::int_ num_params = 1;
-
-    template <typename T>
-    bool operator()(const T* x, T* residual) const {
-        *residual = T{*x} - const_value;
-        return true;
-    }
-};
+namespace gcs {
 
 //! @brief Set the distance between 2 points
 template <typename T>
@@ -60,22 +13,6 @@ T distance(const T& x1, const T& y1, const T& x2, const T& y2, const T& d) {
 }
 
 CSTR_CREATE_FUNCTOR_(distance, 5);
-
-//! @brief Set two values to equal
-template <typename T>
-T equate(const T& x1, const T& x2) {
-    return x1 - x2;
-}
-
-CSTR_CREATE_FUNCTOR_(equate, 2);  // TODO: metaprogramming map??
-
-//! @brief Set the difference between 2 values
-template <typename T>
-T difference(const T& x1, const T& x2, const T& d) {
-    return ceres::abs(x1 - x2) - d;
-}
-
-CSTR_CREATE_FUNCTOR_(difference, 3);
 
 //! @brief Constrain a point to lie on a line
 //! @note (x3, y3) is the point
@@ -211,6 +148,6 @@ T tangent_circles(const T& x1,
 
 CSTR_CREATE_FUNCTOR_(tangent_circles, 6);
 
-}  // namespace constraints2d_unsigned
+}  // namespace gcs
 
-#endif  // CONSTRAINTS2D_UNSIGNED_H_
+#endif  // GCS_LIB_INCLUDE_GCS_G2D_CONSTRAINTS_UNSIGNED_MATH

@@ -1,73 +1,13 @@
-#ifndef GCS_GEOMETRY_H_
-#define GCS_GEOMETRY_H_
+#ifndef GCS_LIB_INCLUDE_GCS_G2D_CONSTRAINTS_UNSIGNED
+#define GCS_LIB_INCLUDE_GCS_G2D_CONSTRAINTS_UNSIGNED
 
-#include <gcs/constraints/constraints2d_unsigned.h>
-#include <gcs/solver/solve_elements.h>
+#include <ceres/ceres.h>
+#include <gcs/core.h>
+#include <gcs/g2d/geometry.h>
 
-#include <vector>
+namespace gcs {
 
-// geom 2D
-
-namespace GCS {
-
-struct Geometry {
-    virtual std::vector<Variable*> get_variables() = 0;
-};
-
-struct Point : Geometry {
-    Variable x;
-    Variable y;
-
-    Point(Variable x, Variable y) : x{x}, y{y} {}
-
-    std::vector<Variable*> get_variables();
-};
-
-struct Line : Geometry {
-    Point p1;
-    Point p2;
-
-    Line(Point p1, Point p2) : p1{p1}, p2{p2} {}
-
-    std::vector<Variable*> get_variables();
-};
-
-struct Circle : Geometry {
-    Point p;
-    Variable r;
-
-    Circle(Point p, Variable r) : p{p}, r{r} {}
-
-    std::vector<Variable*> get_variables();
-};
-
-//-----------------------------------------------------------------------------
-
-struct Constraint {
-    // virtual std::vector<Equation> get_equations() = 0;
-
-    virtual void add_cost_function(ceres::Problem& problem) = 0;
-};
-
-// TODO: separation b/n solve nodes and data? or nah??
-
-// TODO: auto-generate these
-// - input
-//   - ordered set of geometries/variables
-//   - set of constraint functions/functors
-// - output
-//   - auto-gen structures
-//   - ceres functors
-//   - mapping of vars to functors
-struct SetConstant : Constraint {
-    double value;
-    Variable* v;
-    Equation eqn;
-
-    SetConstant(Variable& v, double value) : v{&v}, value{value}, eqn{{&v}} {}
-
-    void add_cost_function(ceres::Problem& problem);
-};
+namespace g2d {
 
 struct Distance : Constraint {
     Point* p1;
@@ -77,28 +17,6 @@ struct Distance : Constraint {
 
     Distance(Point& p1, Point& p2, Variable& d)
         : p1{&p1}, p2{&p2}, d{&d}, eqn{{&p1.x, &p1.y, &p2.x, &p2.y, &d}} {}
-
-    void add_cost_function(ceres::Problem& problem);
-};
-
-struct Equate : Constraint {
-    Variable* v1;
-    Variable* v2;
-    Equation eqn;
-
-    Equate(Variable& v1, Variable& v2) : v1{&v1}, v2{&v2}, eqn{{&v1, &v2}} {}
-
-    void add_cost_function(ceres::Problem& problem);
-};
-
-struct Difference : Constraint {
-    Variable* v1;
-    Variable* v2;
-    Variable* d;
-    Equation eqn;
-
-    Difference(Variable& v1, Variable& v2, Variable& d)
-        : v1{&v1}, v2{&v2}, d{&d}, eqn{{&v1, &v2, &d}} {}
 
     void add_cost_function(ceres::Problem& problem);
 };
@@ -211,6 +129,8 @@ struct TangentCircles : Constraint {
     void add_cost_function(ceres::Problem& problem);
 };
 
-}  //  namespace GCS
+}  // namespace g2d
 
-#endif  // GCS_GEOMETRY_H_
+}  // namespace gcs
+
+#endif  // GCS_LIB_INCLUDE_GCS_G2D_CONSTRAINTS_UNSIGNED

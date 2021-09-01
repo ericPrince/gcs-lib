@@ -1,14 +1,13 @@
-#ifndef GCS_SOLVE_ELEMENTS_
-#define GCS_SOLVE_ELEMENTS_
+#ifndef GCS_LIB_INCLUDE_GCS_CORE_SOLVE_ELEMENTS
+#define GCS_LIB_INCLUDE_GCS_CORE_SOLVE_ELEMENTS
 
 #include <map>
 #include <memory>
 #include <queue>
 #include <set>
 #include <unordered_set>
-#include <vector>
 
-namespace GCS {
+namespace gcs {
 
 template <typename T>
 using uptr = std::unique_ptr<T>;
@@ -60,18 +59,16 @@ struct EquationSet {
     std::unordered_set<EquationSet> frontier() const;
 };
 
-std::vector<EquationSet> split(EquationSet& equation_set);
-
-}  // namespace GCS
+}  // namespace gcs
 
 namespace std {
 
 //! Hash support for Eqn_set
 template <>
-struct hash<GCS::EquationSet> {
-    size_t operator()(const GCS::EquationSet& eqn_set) const;
+struct hash<gcs::EquationSet> {
+    size_t operator()(const gcs::EquationSet& eqn_set) const;
 };
 
 }  // namespace std
 
-#endif  // GCS_SOLVE_ELEMENTS_
+#endif  // GCS_LIB_INCLUDE_GCS_CORE_SOLVE_ELEMENTS

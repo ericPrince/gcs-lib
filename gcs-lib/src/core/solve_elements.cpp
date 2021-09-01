@@ -1,6 +1,6 @@
-#include <gcs/solver/solve_elements.h>
+#include <gcs/core/solve_elements.h>
 
-namespace GCS {
+namespace gcs {
 
 // Variable
 
@@ -143,10 +143,10 @@ std::unordered_set<EquationSet> EquationSet::frontier() const {
     return frontier_set;
 }
 
-}  // namespace GCS
+}  // namespace gcs
 
-size_t std::hash<GCS::EquationSet>::operator()(
-    const GCS::EquationSet& eqn_set) const {
+size_t std::hash<gcs::EquationSet>::operator()(
+    const gcs::EquationSet& eqn_set) const {
     // references:
     // - hash function for vector: https://stackoverflow.com/a/27216842
     // - iteration over unordered set: https://stackoverflow.com/q/36242103
