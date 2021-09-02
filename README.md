@@ -10,10 +10,16 @@ constraints.
 This project uses the [bazel](https://bazel.build/) build system. The repo also contains
 a setup for developing using a [VS Code devcontainer](https://code.visualstudio.com/docs/remote/create-dev-container).
 
-To build and run the main test program, run:
+To build and run the sample problem/test:
 
 ```bash
-bazel run //:main
+bazel test --test_output=all //gcs:problem1_test
+```
+
+To build all components of gcs:
+
+```bash
+bazel build //gcs:all
 ```
 
 ## Concepts

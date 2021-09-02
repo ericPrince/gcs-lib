@@ -1,8 +1,9 @@
-#ifndef GCS_LIB_INCLUDE_GCS_G2D_CONSTRAINTS_UNSIGNED_MATH
-#define GCS_LIB_INCLUDE_GCS_G2D_CONSTRAINTS_UNSIGNED_MATH
+#ifndef GCS_G2D_CONSTRAINTS_UNSIGNED_MATH
+#define GCS_G2D_CONSTRAINTS_UNSIGNED_MATH
 
 #include <ceres/ceres.h>
-#include <gcs/core/constraints.h>
+
+#include "gcs/core/constraints.h"
 
 namespace gcs {
 
@@ -150,4 +151,4 @@ CSTR_CREATE_FUNCTOR_(tangent_circles, 6);
 
 }  // namespace gcs
 
-#endif  // GCS_LIB_INCLUDE_GCS_G2D_CONSTRAINTS_UNSIGNED_MATH
+#endif  // GCS_G2D_CONSTRAINTS_UNSIGNED_MATH

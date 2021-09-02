@@ -1,9 +1,9 @@
-#ifndef GCS_LIB_INCLUDE_GCS_G2D_GEOMETRY
-#define GCS_LIB_INCLUDE_GCS_G2D_GEOMETRY
-
-#include <gcs/core.h>
+#ifndef GCS_G2D_GEOMETRY
+#define GCS_G2D_GEOMETRY
 
 #include <vector>
+
+#include "gcs/core/core.h"
 
 namespace gcs {
 
@@ -40,4 +40,4 @@ struct Circle : Geometry {
 
 }  // namespace gcs
 
-#endif  // GCS_LIB_INCLUDE_GCS_G2D_GEOMETRY
+#endif  // GCS_G2D_GEOMETRY

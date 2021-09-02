@@ -1,9 +1,9 @@
 #include <ceres/ceres.h>
-#include <gcs/core.h>
-#include <gcs/g2d.h>
 
 #include <iostream>
 
+#include "gcs/core/core.h"
+#include "gcs/g2d/g2d.h"
 
 int main(int argc, char** argv) {
     const double r0 = 1.5;

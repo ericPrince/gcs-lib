@@ -1,5 +1,5 @@
 #include <ceres/ceres.h>
-#include <gcs/core/constraints.h>
+#include "gcs/core/constraints.h"
 
 namespace gcs {
 

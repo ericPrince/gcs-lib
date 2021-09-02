@@ -1,7 +1,8 @@
-#include <gcs/core/solve_elements.h>
-#include <gcs/core/split_equation_sets.h>
+#include "gcs/core/split_equation_sets.h"
 
 #include <vector>
+
+#include "gcs/core/solve_elements.h"
 
 namespace gcs {
 

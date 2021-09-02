@@ -1,12 +1,13 @@
-#ifndef GCS_LIB_INCLUDE_GCS_CORE_CONSTRAINTS
-#define GCS_LIB_INCLUDE_GCS_CORE_CONSTRAINTS
+#ifndef GCS_CORE_CONSTRAINTS
+#define GCS_CORE_CONSTRAINTS
 
 #include <ceres/ceres.h>
-#include <gcs/core/solve_elements.h>
 
 #include <boost/preprocessor.hpp>
 #include <cmath>
 #include <metal.hpp>
+
+#include "gcs/core/solve_elements.h"
 
 namespace gcs {
 
@@ -60,8 +61,8 @@ struct set_const_functor {
 };
 
 struct SetConstant : Constraint {
-    double value;
     Variable* v;
+    double value;
     Equation eqn;
 
     SetConstant(Variable& v, double value) : v{&v}, value{value}, eqn{{&v}} {}
@@ -109,4 +110,4 @@ struct Difference : Constraint {
 
 }  // namespace gcs
 
-#endif  // GCS_LIB_INCLUDE_GCS_CORE_CONSTRAINTS
+#endif  // GCS_CORE_CONSTRAINTS

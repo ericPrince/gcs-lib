@@ -1,9 +1,10 @@
-#ifndef GCS_LIB_INCLUDE_GCS_G2D_CONSTRAINTS_UNSIGNED
-#define GCS_LIB_INCLUDE_GCS_G2D_CONSTRAINTS_UNSIGNED
+#ifndef GCS_G2D_CONSTRAINTS_UNSIGNED
+#define GCS_G2D_CONSTRAINTS_UNSIGNED
 
 #include <ceres/ceres.h>
-#include <gcs/core.h>
-#include <gcs/g2d/geometry.h>
+
+#include "gcs/core/core.h"
+#include "gcs/g2d/geometry.h"
 
 namespace gcs {
 
@@ -39,8 +40,8 @@ struct OffsetLinePoint : Constraint {
     Equation eqn;
 
     OffsetLinePoint(Point& p, Line& L, Variable& d)
-        : p{&p},
-          L{&L},
+        : L{&L},
+          p{&p},
           d{&d},
           eqn{{&p.x, &p.y, &L.p1.x, &L.p1.y, &L.p2.x, &L.p2.y, &d}} {}
 
@@ -133,4 +134,4 @@ struct TangentCircles : Constraint {
 
 }  // namespace gcs
 
-#endif  // GCS_LIB_INCLUDE_GCS_G2D_CONSTRAINTS_UNSIGNED
+#endif  // GCS_G2D_CONSTRAINTS_UNSIGNED

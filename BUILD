@@ -1,22 +1,8 @@
-load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+package(default_visibility = ["//visibility:public"])
 
-cc_library(
-    name = "gcs",
-    includes = ["gcs-lib/include"],
-    srcs = glob(["gcs-lib/src/**"]),
-    hdrs = glob(["gcs-lib/include/**"]),
-    deps = [
-        "@ceres-solver//:ceres",
-        "@com_github_brunocodutra_metal//:metal",
-        "@com_github_boostorg_preprocessor//:boost-preprocessor",
-    ],
-)
+licenses(["notice"])
 
-cc_binary(
-    name = "main",
-    srcs = ["main/main.cpp"],
-    deps = [
-        "//:gcs",
-        "@ceres-solver//:ceres",
-    ],
-)
+# Expose license for external usage through bazel.
+exports_files([
+    "LICENSE",
+])

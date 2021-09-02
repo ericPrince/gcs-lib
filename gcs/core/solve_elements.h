@@ -1,5 +1,5 @@
-#ifndef GCS_LIB_INCLUDE_GCS_CORE_SOLVE_ELEMENTS
-#define GCS_LIB_INCLUDE_GCS_CORE_SOLVE_ELEMENTS
+#ifndef GCS_CORE_SOLVE_ELEMENTS
+#define GCS_CORE_SOLVE_ELEMENTS
 
 #include <map>
 #include <memory>
@@ -71,4 +71,4 @@ struct hash<gcs::EquationSet> {
 
 }  // namespace std
 
-#endif  // GCS_LIB_INCLUDE_GCS_CORE_SOLVE_ELEMENTS
+#endif  // GCS_CORE_SOLVE_ELEMENTS
