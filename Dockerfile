@@ -9,11 +9,9 @@ RUN curl -fsSL https://bazel.build/bazel-release.pub.gpg | gpg --dearmor > bazel
 
 RUN apt install -y build-essential git unzip zip
 
-RUN echo "build --cxxopt='-std=c++14'" > ~/.bazelrc
+# TODO: these commands work from inside the container, just not when building?
+# WORKDIR /usr/local/bin
+# RUN curl -fsSL https://github.com/bazelbuild/buildtools/releases/download/4.0.1/buildifier-linux-amd64 -o buildifier \
+#     && chmod +x buildifer
 
-WORKDIR /gcs-cpp
-COPY . .
-
-FROM base as build
-
-RUN bazel build //:main
+WORKDIR ~

@@ -4,17 +4,15 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_r
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 git_repository(
-    name = "com_github_ceres-solver_ceres-solver", 
+    name = "com_github_ceres-solver_ceres-solver",
     remote = "https://github.com/ceres-solver/ceres-solver.git",
     tag = "2.0.0",
 )
 
 new_git_repository(
     name = "com_github_brunocodutra_metal",
-    remote = "https://github.com/brunocodutra/metal",
-    tag = "2.1.3",
-    build_file_content = 
-"""
+    build_file_content =
+        """
 cc_library(
     name = "metal",
     srcs = [],
@@ -22,15 +20,15 @@ cc_library(
     hdrs = glob(['include/**']),
     visibility = ['//visibility:public'],
 )
-"""
+""",
+    remote = "https://github.com/brunocodutra/metal",
+    tag = "2.1.3",
 )
 
 new_git_repository(
     name = "com_github_boostorg_preprocessor",
-    remote = "https://github.com/boostorg/preprocessor",
-    tag = "boost-1.77.0",
-    build_file_content = 
-"""
+    build_file_content =
+        """
 cc_library(
     name="boost-preprocessor",
     srcs = [],
@@ -38,9 +36,10 @@ cc_library(
     hdrs = glob(['include/**']),
     visibility = ['//visibility:public'],
 )
-"""
+""",
+    remote = "https://github.com/boostorg/preprocessor",
+    tag = "boost-1.77.0",
 )
-
 
 # the below are defined in the ceres-solver WORKSPACE
 
@@ -68,13 +67,8 @@ http_archive(
 # External dependency: Eigen; has no Bazel build.
 http_archive(
     name = "com_gitlab_libeigen_eigen",
-    sha256 = "0215c6593c4ee9f1f7f28238c4e8995584ebf3b556e9dbf933d84feb98d5b9ef",
-    strip_prefix = "eigen-3.3.8",
-    urls = [
-        "https://gitlab.com/libeigen/eigen/-/archive/3.3.8/eigen-3.3.8.tar.bz2",
-    ],
     build_file_content =
-"""
+        """
 # TODO(keir): Replace this with a better version, like from TensorFlow.
 # See https://github.com/ceres-solver/ceres-solver/issues/337.
 cc_library(
@@ -84,17 +78,19 @@ cc_library(
     hdrs = glob(['Eigen/**']),
     visibility = ['//visibility:public'],
 )
-"""
+""",
+    sha256 = "0215c6593c4ee9f1f7f28238c4e8995584ebf3b556e9dbf933d84feb98d5b9ef",
+    strip_prefix = "eigen-3.3.8",
+    urls = [
+        "https://gitlab.com/libeigen/eigen/-/archive/3.3.8/eigen-3.3.8.tar.bz2",
+    ],
 )
 
 # External dependency: Google Benchmark; has no Bazel build.
 http_archive(
     name = "com_github_google_benchmark",
-    urls = ["https://github.com/google/benchmark/archive/56f52ee228783547f544d9ac4a533574b9010e3f.zip"],
-    sha256 = "8c1c6e90cd320b07504fabb86400f390faff2e599183ebd9396908817968ae79",
-    strip_prefix = "benchmark-56f52ee228783547f544d9ac4a533574b9010e3f",
     build_file_content =
-"""
+        """
 cc_library(
     name = "benchmark",
     srcs = glob([
@@ -110,5 +106,8 @@ cc_library(
     ],
     visibility = ["//visibility:public"],
 )
-"""
+""",
+    sha256 = "8c1c6e90cd320b07504fabb86400f390faff2e599183ebd9396908817968ae79",
+    strip_prefix = "benchmark-56f52ee228783547f544d9ac4a533574b9010e3f",
+    urls = ["https://github.com/google/benchmark/archive/56f52ee228783547f544d9ac4a533574b9010e3f.zip"],
 )
