@@ -1,0 +1,160 @@
+geometry_definitions:
+  - classname: Point
+    namespace: gcs.g2d
+    variables:
+      - x
+      - "y"
+  - classname: Line
+    namespace: gcs.g2d
+    geoms:
+      - name: p1
+        type: gcs.g2d.Point
+      - name: p2
+        type: gcs.g2d.Point
+  - classname: Circle
+    namespace: gcs.g2d
+    variables:
+      - radius
+    geoms:
+      - name: center
+        type: gcs.g2d.Point
+constraint_definitions:
+  - classname: SetConstant
+    namespace: gcs
+    variables:
+      - var
+    equations:
+      - funcname: equate
+        ftor_args:
+          - name: value
+  - classname: Equate
+    namespace: gcs
+    variables:
+      - v1
+      - v2
+    equations:
+      - funcname: equate
+  - classname: Difference
+    namespace: gcs
+    variables:
+      - v1
+      - v2
+      - diff
+    equations:
+      - funcname: difference
+  - classname: PointOnLine
+    namespace: gcs.g2d
+    geoms:
+      - name: point
+        type: gcs.g2d.Point
+      - name: line
+        type: gcs.g2d.Line
+    equations:
+      - funcname: point_on_line
+  - classname: CoincidentPoints
+    namespace: gcs.g2d
+    geoms:
+      - name: p1
+        type: gcs.g2d.Point
+      - name: p2
+        type: gcs.g2d.Point
+    equations:
+      - funcname: equate
+        variables:
+          - p1.x
+          - p2.x
+      - funcname: equate
+        variables:
+          - p1.y
+          - p2.y
+  - classname: DistancePoints
+    namespace: gcs.g2d
+    geoms:
+      - name: p1
+        type: gcs.g2d.Point
+      - name: p2
+        type: gcs.g2d.Point
+    variables:
+      - d
+    equations:
+      - funcname: distance
+  - classname: LineLength
+    namespace: gcs.g2d
+    geoms:
+      - name: line
+        type: gcs.g2d.Line
+    variables:
+      - d
+    equations:
+      - funcname: distance
+  - classname: OffsetLinePoint
+    namespace: gcs.g2d
+    geoms:
+      - name: line
+        type: gcs.g2d.Line
+      - name: point
+        type: gcs.g2d.Point
+    variables:
+      - d
+    equations:
+      - funcname: offset_line_point
+  - classname: AngleBetweenLines
+    namespace: gcs.g2d
+    geoms:
+      - name: line1
+        type: gcs.g2d.Line
+      - name: line2
+        type: gcs.g2d.Line
+    variables:
+      - angle
+    equations:
+      - funcname: angle_points_4
+  - classname: AngleThreePoints
+    namespace: gcs.g2d
+    geoms:
+      - name: p1
+        type: gcs.g2d.Point
+      - name: p2
+        type: gcs.g2d.Point
+      - name: p3
+        type: gcs.g2d.Point
+    variables:
+      - angle
+    equations:
+      - funcname: angle_points_3
+  - classname: AngleOfLine
+    namespace: gcs.g2d
+    geoms:
+      - name: line
+        type: gcs.g2d.Line
+    variables:
+      - angle
+    equations:
+      - funcname: angle_points_2
+  - classname: PointOnCircle
+    namespace: gcs.g2d
+    geoms:
+      - name: point
+        type: gcs.g2d.Point
+      - name: circle
+        type: gcs.g2d.Circle
+    equations:
+      - funcname: point_on_circle
+  - classname: TangentLineCircle
+    namespace: gcs.g2d
+    geoms:
+      - name: line
+        type: gcs.g2d.Line
+      - name: circle
+        type: gcs.g2d.Circle
+    equations:
+      - funcname: tangent_line_circle
+  - classname: TangentCircles
+    namespace: gcs.g2d
+    geoms:
+      - name: c1
+        type: gcs.g2d.Circle
+      - name: c2
+        type: gcs.g2d.Circle
+    equations:
+      - funcname: tangent_circles
