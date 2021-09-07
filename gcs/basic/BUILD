@@ -5,13 +5,13 @@ package(default_visibility = ["//visibility:public"])
 licenses(["notice"])
 
 cc_library(
-    name = "g2d",
+    name = "basic",
     srcs = glob(
         ["*.cpp"],
         ["*_test.cpp"],
     ),
     hdrs = glob(["*.h"]),
-    include_prefix = "gcs/g2d/",
+    include_prefix = "gcs/basic/",
     deps = [
         "//gcs/core",
         "@com_github_brunocodutra_metal//:metal",

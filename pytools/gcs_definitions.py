@@ -1,5 +1,6 @@
 from typing import *
 import itertools as it
+from pathlib import Path
 
 from pydantic import BaseModel, validator
 
@@ -31,15 +32,15 @@ class GeometryDefinition(BaseModel):
         )
 
         return '\n'.join(
-            [f'{self.fullname} : gcs::Geometry {{']
+            [f'struct {self.classname} : gcs::Geometry {{']
             + [f"    {type_} {name};" for type_, name in param_names]
             + [
                 '',
-                f'    {self.fullname}(' + ', '.join([f'{type_} {name}' for type_, name in param_names]) + ')',
+                f'    {self.classname}(' + ', '.join([f'{type_} {name}' for type_, name in param_names]) + ')',
                 '        : ' + ', '.join([f'{name}{{{name}}}' for _, name in param_names]) + ' {}',
                 '',
-                '    std::vector<gcs::Variable*> get_variables() const {',
-                '        return {' + ', '.join([f'&{var}' for var in self.get_all_vars(geom_types)]) + '}',
+                '    std::vector<gcs::Variable*> get_variables() {',  # TODO: get_variables const?
+                '        return {' + ', '.join([f'&{var}' for var in self.get_all_vars(geom_types)]) + '};',
                 '    }'
             ]
             + ['};']
@@ -71,7 +72,7 @@ class EquationUsage(BaseModel):
             f'        double {arg.name};' for arg in self.ftor_args
         ] + [
             '',
-            f'        template typename<T>',
+            f'        template <typename T>',
             '        bool operator()(' + ''.join((f'const T* {var}, ' for var in variables)) + 'T* r) const {',
             f'            *r = {self.funcname}(' + ', '.join([f'*{var}' for var in variables] + [arg.name for arg in self.ftor_args]) + ');',
             '            return true;',
@@ -86,7 +87,7 @@ class EquationUsage(BaseModel):
                 f'            gcs::create_scalar_autodiff(new Functor_{functor_suffix}{{' + ', '.join([arg.name for arg in self.ftor_args]) + '}),',
                 '            nullptr' 
                     + ''.join([
-                        ',\n            ' + f'&{var.replace(".", "->", 1)}' 
+                        ',\n            ' + f'&{(var + ".value").replace(".", "->", 1)}' 
                         for var in self.get_variables(constraint, geom_types)
                     ]),
                 '        );',
@@ -117,11 +118,11 @@ class ConstraintDefinition(BaseModel):
         )
 
         return '\n'.join(
-            [f'{self.fullname} : gcs::Constraint {{']
+            [f'struct {self.classname} : gcs::Constraint {{']
             + [f"    {type_}* {name};" if type_ != 'double' else f'    double {name};' for type_, name in param_names]
             + [
                 '',
-                f'    {self.fullname}(' + ', '.join([f'{type_}& {name}' if type_ != 'double' else f'double {name}' for type_, name in param_names]) + ')',
+                f'    {self.classname}(' + ', '.join([f'{type_}& {name}' if type_ != 'double' else f'double {name}' for type_, name in param_names]) + ')',
                 '        : ' + ', '.join([f'{name}{{&{name}}}' if type_ != 'double' else f'{name}{{{name}}}' for type_, name in param_names]) + ' {}',
                 '',
             ]
@@ -172,10 +173,124 @@ def main():
         gcs_data = yaml.load(fp, Loader=yaml.SafeLoader)
 
     gcs_defs = GcsDefinitions.parse_obj(gcs_data)
+    geom_types = gcs_defs.get_geom_types()
     # print(gcs_defs.make_structs())
 
     with open('gcs_definitions.cpp', 'w') as fp:
         fp.write(gcs_defs.make_structs())
+
+    # geoms
+    namespaces = {}
+    for geom in gcs_defs.geometry_definitions:
+        ns = geom.namespace
+
+        if ns not in namespaces:
+            namespaces[ns] = []
+
+        namespaces[ns].append(geom)
+
+    for ns, geoms in namespaces.items():
+        header_file = Path('..') / ns.replace('.', '/') / 'geometry.h'
+
+        include_macro_name = f'{ns.upper().replace(".", "_")}_GEOMETRY'
+        include_guard_start = '\n'.join([
+            f'#ifndef {include_macro_name}',
+            f'#define {include_macro_name}'
+        ])
+        include_guard_end = f'#endif  // {include_macro_name}'
+
+        namespace_start = '\n\n'.join([
+            f'namespace {ns_part}{{'
+            for ns_part in ns.split('.')
+        ])
+        namespace_end = '\n\n'.join([
+            f'}}  // namespace {ns_part}'
+            for ns_part in ns.split('.')
+        ])
+
+        include_statements = '\n'.join([
+                '#include <vector>',
+                '#include <ceres/ceres.h>',
+                '#include "gcs/core/core.h"',
+        ])
+
+        struct_defs = '\n\n'.join([
+            geom.make_struct(geom_types) 
+            for geom in geoms
+        ])
+
+        file_contents = '\n\n'.join([
+            include_guard_start,
+            include_statements,
+            namespace_start,
+            struct_defs,
+            namespace_end,
+            include_guard_end,
+        ])
+
+        header_file.parent.mkdir(parents=True, exist_ok=True)
+        with header_file.open('w') as fp:
+            fp.write(file_contents)
+
+
+    # constraints
+    namespaces = {}
+    for cstr in gcs_defs.constraint_definitions:
+        ns = cstr.namespace
+
+        if ns not in namespaces:
+            namespaces[ns] = []
+
+        namespaces[ns].append(cstr)
+
+    for ns, constraints in namespaces.items():
+        header_file = Path('..') / ns.replace('.', '/') / 'constraints.h'
+
+        include_macro_name = f'{ns.upper().replace(".", "_")}_CONSTRAINTS'
+        include_guard_start = '\n'.join([
+            f'#ifndef {include_macro_name}',
+            f'#define {include_macro_name}'
+        ])
+        include_guard_end = f'#endif  // {include_macro_name}'
+
+        namespace_start = '\n\n'.join([
+            f'namespace {ns_part}{{'
+            for ns_part in ns.split('.')
+        ])
+        namespace_end = '\n\n'.join([
+            f'}}  // namespace {ns_part}'
+            for ns_part in ns.split('.')
+        ])
+
+        include_statements = '\n'.join([
+                '#include <vector>',
+                '#include <ceres/ceres.h>',
+                '#include <metal.hpp>',
+                '#include "gcs/core/core.h"',
+        ])
+
+        struct_defs = '\n\n'.join([
+            cstr.make_struct(geom_types) 
+            for cstr in constraints
+        ])
+
+        file_contents = '\n\n'.join([
+            include_guard_start,
+            include_statements,
+            namespace_start,
+            struct_defs,
+            namespace_end,
+            include_guard_end,
+        ])
+
+        header_file.parent.mkdir(parents=True, exist_ok=True)
+        with header_file.open('w') as fp:
+            fp.write(file_contents)
+
+
+    with open('gcs_definitions.cpp', 'w') as fp:
+        fp.write(gcs_defs.make_structs())
+
 
 
 if __name__ == '__main__':

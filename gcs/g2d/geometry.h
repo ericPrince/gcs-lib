@@ -2,42 +2,51 @@
 #define GCS_G2D_GEOMETRY
 
 #include <vector>
-
+#include <ceres/ceres.h>
 #include "gcs/core/core.h"
 
-namespace gcs {
+namespace gcs{
 
-namespace g2d {
+namespace g2d{
 
-struct Point : Geometry {
-    Variable x;
-    Variable y;
+struct Point : gcs::Geometry {
+    gcs::Variable x;
+    gcs::Variable y;
 
-    Point(Variable x, Variable y) : x{x}, y{y} {}
+    Point(gcs::Variable x, gcs::Variable y)
+        : x{x}, y{y} {}
 
-    std::vector<Variable*> get_variables();
+    std::vector<gcs::Variable*> get_variables() {
+        return {&x, &y};
+    }
 };
 
-struct Line : Geometry {
-    Point p1;
-    Point p2;
+struct Line : gcs::Geometry {
+    gcs::g2d::Point p1;
+    gcs::g2d::Point p2;
 
-    Line(Point p1, Point p2) : p1{p1}, p2{p2} {}
+    Line(gcs::g2d::Point p1, gcs::g2d::Point p2)
+        : p1{p1}, p2{p2} {}
 
-    std::vector<Variable*> get_variables();
+    std::vector<gcs::Variable*> get_variables() {
+        return {&p1.x, &p1.y, &p2.x, &p2.y};
+    }
 };
 
-struct Circle : Geometry {
-    Point p;
-    Variable r;
+struct Circle : gcs::Geometry {
+    gcs::g2d::Point center;
+    gcs::Variable radius;
 
-    Circle(Point p, Variable r) : p{p}, r{r} {}
+    Circle(gcs::g2d::Point center, gcs::Variable radius)
+        : center{center}, radius{radius} {}
 
-    std::vector<Variable*> get_variables();
+    std::vector<gcs::Variable*> get_variables() {
+        return {&center.x, &center.y, &radius};
+    }
 };
-
-}  // namespace g2d
 
 }  // namespace gcs
+
+}  // namespace g2d
 
 #endif  // GCS_G2D_GEOMETRY

@@ -8,6 +8,7 @@ cc_test(
     name = "problem1_test",
     srcs = ["problem1_test.cpp"],
     deps = [
+        "//gcs/basic",
         "//gcs/core",
         "//gcs/g2d",
         "@com_github_ceres-solver_ceres-solver//:ceres",

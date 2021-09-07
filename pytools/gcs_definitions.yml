@@ -20,7 +20,7 @@ geometry_definitions:
         type: gcs.g2d.Point
 constraint_definitions:
   - classname: SetConstant
-    namespace: gcs
+    namespace: gcs.basic
     variables:
       - var
     equations:
@@ -28,14 +28,14 @@ constraint_definitions:
         ftor_args:
           - name: value
   - classname: Equate
-    namespace: gcs
+    namespace: gcs.basic
     variables:
       - v1
       - v2
     equations:
       - funcname: equate
   - classname: Difference
-    namespace: gcs
+    namespace: gcs.basic
     variables:
       - v1
       - v2
@@ -108,7 +108,7 @@ constraint_definitions:
     variables:
       - angle
     equations:
-      - funcname: angle_points_4
+      - funcname: angle_point_4
   - classname: AngleThreePoints
     namespace: gcs.g2d
     geoms:
@@ -121,7 +121,7 @@ constraint_definitions:
     variables:
       - angle
     equations:
-      - funcname: angle_points_3
+      - funcname: angle_point_3
   - classname: AngleOfLine
     namespace: gcs.g2d
     geoms:
@@ -130,7 +130,7 @@ constraint_definitions:
     variables:
       - angle
     equations:
-      - funcname: angle_points_2
+      - funcname: angle_point_2
   - classname: PointOnCircle
     namespace: gcs.g2d
     geoms:
