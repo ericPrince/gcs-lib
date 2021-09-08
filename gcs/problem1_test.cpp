@@ -70,5 +70,30 @@ int main(int argc, char** argv) {
     std::cout << "p3.y: " << p3.y.value << std::endl;
     std::cout << "c1.r:  " << c1.radius.value << std::endl;
 
-    // gcs::EquationSet equation_set = {};
+    // test equation set splitting
+
+    gcs::EquationSet equation_set = {};
+    std::vector<gcs::Equation> equations;
+
+    for (auto& constraint : constraints) {
+        for (auto& eqn : constraint->get_equations()) {
+            equations.push_back(std::move(eqn));
+        }
+    }
+
+    for (auto& eqn : equations) {
+        equation_set.add_equation(eqn);
+    }
+
+    auto split_equation_sets = gcs::split(equation_set);
+
+    std::cout << std::endl
+              << "Split equation sets: " << split_equation_sets.size()
+              << std::endl;
+    std::cout << "  number of equations: " << equation_set.equations.size()
+              << std::endl;
+    std::cout << "  number of variables: "
+              << equation_set.get_variables().size() << std::endl;
+    std::cout << "  degrees of freedom: " << equation_set.degrees_of_freedom()
+              << std::endl;
 }
