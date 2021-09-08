@@ -94,6 +94,9 @@ class EquationUsage(BaseModel):
             ]
         )
 
+    def make_equation_instantiation(self, constraint: 'Constraint', geom_types):
+        return '{{' + ', '.join([f'{"&" if "." in var else ""}{var.replace(".", "->", 1)}' for var in self.get_variables(constraint, geom_types)]) + '}}'
+
 
 class ConstraintDefinition(BaseModel):
     classname: str
@@ -137,6 +140,16 @@ class ConstraintDefinition(BaseModel):
             ]
             + [
                 '    }',
+                '',
+                '    std::vector<gcs::Equation> get_equations() const {',
+                # f'        return {{{", ".join([eqn.make_equation_instantiation(self, geom_types) for eqn in self.equations])}}};'
+                '        std::vector<gcs::Equation> eqns{};',
+                '',
+                '\n'.join([f'        eqns.push_back({eqn.make_equation_instantiation(self, geom_types)});' for eqn in self.equations]),
+                '',
+                '        return eqns;',
+                '    }',
+                '',
                 '};',
             ]
         ) 
@@ -254,12 +267,12 @@ def main():
         include_guard_end = f'#endif  // {include_macro_name}'
 
         namespace_start = '\n\n'.join([
-            f'namespace {ns_part}{{'
+            f'namespace {ns_part} {{'
             for ns_part in ns.split('.')
         ])
         namespace_end = '\n\n'.join([
             f'}}  // namespace {ns_part}'
-            for ns_part in ns.split('.')
+            for ns_part in reversed(ns.split('.'))
         ])
 
         include_statements = '\n'.join([

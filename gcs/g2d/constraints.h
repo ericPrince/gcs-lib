@@ -52,6 +52,19 @@ struct PointOnLine : gcs::Constraint {
                                  &line->p2.x.value,
                                  &line->p2.y.value);
     }
+
+    std::vector<gcs::Equation> get_equations() const {
+        std::vector<gcs::Equation> eqns{};
+
+        eqns.push_back({{&point->x,
+                         &point->y,
+                         &line->p1.x,
+                         &line->p1.y,
+                         &line->p2.x,
+                         &line->p2.y}});
+
+        return eqns;
+    }
 };
 
 struct CoincidentPoints : gcs::Constraint {
@@ -90,6 +103,15 @@ struct CoincidentPoints : gcs::Constraint {
                                  &p1->y.value,
                                  &p2->y.value);
     }
+
+    std::vector<gcs::Equation> get_equations() const {
+        std::vector<gcs::Equation> eqns{};
+
+        eqns.push_back({{&p1->x, &p2->x}});
+        eqns.push_back({{&p1->y, &p2->y}});
+
+        return eqns;
+    }
 };
 
 struct DistancePoints : gcs::Constraint {
@@ -124,6 +146,14 @@ struct DistancePoints : gcs::Constraint {
                                  &p2->y.value,
                                  &d->value);
     }
+
+    std::vector<gcs::Equation> get_equations() const {
+        std::vector<gcs::Equation> eqns{};
+
+        eqns.push_back({{&p1->x, &p1->y, &p2->x, &p2->y, d}});
+
+        return eqns;
+    }
 };
 
 struct LineLength : gcs::Constraint {
@@ -155,6 +185,15 @@ struct LineLength : gcs::Constraint {
                                  &line->p2.x.value,
                                  &line->p2.y.value,
                                  &d->value);
+    }
+
+    std::vector<gcs::Equation> get_equations() const {
+        std::vector<gcs::Equation> eqns{};
+
+        eqns.push_back(
+            {{&line->p1.x, &line->p1.y, &line->p2.x, &line->p2.y, d}});
+
+        return eqns;
     }
 };
 
@@ -201,6 +240,20 @@ struct OffsetLinePoint : gcs::Constraint {
                                  &point->x.value,
                                  &point->y.value,
                                  &d->value);
+    }
+
+    std::vector<gcs::Equation> get_equations() const {
+        std::vector<gcs::Equation> eqns{};
+
+        eqns.push_back({{&line->p1.x,
+                         &line->p1.y,
+                         &line->p2.x,
+                         &line->p2.y,
+                         &point->x,
+                         &point->y,
+                         d}});
+
+        return eqns;
     }
 };
 
@@ -254,6 +307,22 @@ struct AngleBetweenLines : gcs::Constraint {
                                  &line2->p2.y.value,
                                  &angle->value);
     }
+
+    std::vector<gcs::Equation> get_equations() const {
+        std::vector<gcs::Equation> eqns{};
+
+        eqns.push_back({{&line1->p1.x,
+                         &line1->p1.y,
+                         &line1->p2.x,
+                         &line1->p2.y,
+                         &line2->p1.x,
+                         &line2->p1.y,
+                         &line2->p2.x,
+                         &line2->p2.y,
+                         angle}});
+
+        return eqns;
+    }
 };
 
 struct AngleThreePoints : gcs::Constraint {
@@ -297,6 +366,15 @@ struct AngleThreePoints : gcs::Constraint {
                                  &p3->y.value,
                                  &angle->value);
     }
+
+    std::vector<gcs::Equation> get_equations() const {
+        std::vector<gcs::Equation> eqns{};
+
+        eqns.push_back(
+            {{&p1->x, &p1->y, &p2->x, &p2->y, &p3->x, &p3->y, angle}});
+
+        return eqns;
+    }
 };
 
 struct AngleOfLine : gcs::Constraint {
@@ -330,6 +408,15 @@ struct AngleOfLine : gcs::Constraint {
                                  &line->p2.x.value,
                                  &line->p2.y.value,
                                  &angle->value);
+    }
+
+    std::vector<gcs::Equation> get_equations() const {
+        std::vector<gcs::Equation> eqns{};
+
+        eqns.push_back(
+            {{&line->p1.x, &line->p1.y, &line->p2.x, &line->p2.y, angle}});
+
+        return eqns;
     }
 };
 
@@ -367,6 +454,18 @@ struct PointOnCircle : gcs::Constraint {
                                  &circle->center.x.value,
                                  &circle->center.y.value,
                                  &circle->radius.value);
+    }
+
+    std::vector<gcs::Equation> get_equations() const {
+        std::vector<gcs::Equation> eqns{};
+
+        eqns.push_back({{&point->x,
+                         &point->y,
+                         &circle->center.x,
+                         &circle->center.y,
+                         &circle->radius}});
+
+        return eqns;
     }
 };
 
@@ -411,6 +510,20 @@ struct TangentLineCircle : gcs::Constraint {
                                  &circle->center.y.value,
                                  &circle->radius.value);
     }
+
+    std::vector<gcs::Equation> get_equations() const {
+        std::vector<gcs::Equation> eqns{};
+
+        eqns.push_back({{&line->p1.x,
+                         &line->p1.y,
+                         &line->p2.x,
+                         &line->p2.y,
+                         &circle->center.x,
+                         &circle->center.y,
+                         &circle->radius}});
+
+        return eqns;
+    }
 };
 
 struct TangentCircles : gcs::Constraint {
@@ -450,6 +563,19 @@ struct TangentCircles : gcs::Constraint {
                                  &c2->center.x.value,
                                  &c2->center.y.value,
                                  &c2->radius.value);
+    }
+
+    std::vector<gcs::Equation> get_equations() const {
+        std::vector<gcs::Equation> eqns{};
+
+        eqns.push_back({{&c1->center.x,
+                         &c1->center.y,
+                         &c1->radius,
+                         &c2->center.x,
+                         &c2->center.y,
+                         &c2->radius}});
+
+        return eqns;
     }
 };
 

@@ -69,4 +69,6 @@ int main(int argc, char** argv) {
     std::cout << "p3.x: " << p3.x.value << std::endl;
     std::cout << "p3.y: " << p3.y.value << std::endl;
     std::cout << "c1.r:  " << c1.radius.value << std::endl;
+
+    // gcs::EquationSet equation_set = {};
 }

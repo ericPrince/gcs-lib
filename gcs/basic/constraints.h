@@ -36,6 +36,14 @@ struct SetConstant : gcs::Constraint {
             nullptr,
             &var->value);
     }
+
+    std::vector<gcs::Equation> get_equations() const {
+        std::vector<gcs::Equation> eqns{};
+
+        eqns.push_back({{var}});
+
+        return eqns;
+    }
 };
 
 struct Equate : gcs::Constraint {
@@ -59,6 +67,14 @@ struct Equate : gcs::Constraint {
                                  nullptr,
                                  &v1->value,
                                  &v2->value);
+    }
+
+    std::vector<gcs::Equation> get_equations() const {
+        std::vector<gcs::Equation> eqns{};
+
+        eqns.push_back({{v1, v2}});
+
+        return eqns;
     }
 };
 
@@ -86,6 +102,14 @@ struct Difference : gcs::Constraint {
                                  &v1->value,
                                  &v2->value,
                                  &diff->value);
+    }
+
+    std::vector<gcs::Equation> get_equations() const {
+        std::vector<gcs::Equation> eqns{};
+
+        eqns.push_back({{v1, v2, diff}});
+
+        return eqns;
     }
 };
 

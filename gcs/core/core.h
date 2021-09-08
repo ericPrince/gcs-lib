@@ -6,4 +6,4 @@
 #include "gcs/core/solve_elements.h"
 #include "gcs/core/split_equation_sets.h"
 
-#endif // GCS_CORE_CORE
+#endif  // GCS_CORE_CORE

@@ -1,8 +1,7 @@
-#include <vector>
-
 #include <ceres/ceres.h>
-
 #include <metal.h>
+
+#include <vector>
 
 #include "gcs/core/core.h"
 
@@ -10,20 +9,16 @@ struct Point : gcs::Geometry {
     gcs::Variable x;
     gcs::Variable y;
 
-    Point(gcs::Variable x, gcs::Variable y)
-        : x{x}, y{y} {}
+    Point(gcs::Variable x, gcs::Variable y) : x{x}, y{y} {}
 
-    std::vector<gcs::Variable*> get_variables() {
-        return {&x, &y};
-    }
+    std::vector<gcs::Variable*> get_variables() { return {&x, &y}; }
 };
 
 struct Line : gcs::Geometry {
     gcs::g2d::Point p1;
     gcs::g2d::Point p2;
 
-    Line(gcs::g2d::Point p1, gcs::g2d::Point p2)
-        : p1{p1}, p2{p2} {}
+    Line(gcs::g2d::Point p1, gcs::g2d::Point p2) : p1{p1}, p2{p2} {}
 
     std::vector<gcs::Variable*> get_variables() {
         return {&p1.x, &p1.y, &p2.x, &p2.y};
@@ -46,8 +41,7 @@ struct SetConstant : gcs::Constraint {
     gcs::Variable* var;
     double value;
 
-    SetConstant(gcs::Variable& var, double value)
-        : var{&var}, value{value} {}
+    SetConstant(gcs::Variable& var, double value) : var{&var}, value{value} {}
 
     struct Functor_0 {
         static const metal::int_ num_params = 1;
@@ -64,8 +58,15 @@ struct SetConstant : gcs::Constraint {
         problem.AddResidualBlock(
             gcs::create_scalar_autodiff(new Functor_0{value}),
             nullptr,
-            &var->value
-        );
+            &var->value);
+    }
+
+    std::vector<gcs::Equation> get_equations() const {
+        std::vector<gcs::Equation> eqns{};
+
+        eqns.push_back({{var}});
+
+        return eqns;
     }
 };
 
@@ -73,8 +74,7 @@ struct Equate : gcs::Constraint {
     gcs::Variable* v1;
     gcs::Variable* v2;
 
-    Equate(gcs::Variable& v1, gcs::Variable& v2)
-        : v1{&v1}, v2{&v2} {}
+    Equate(gcs::Variable& v1, gcs::Variable& v2) : v1{&v1}, v2{&v2} {}
 
     struct Functor_0 {
         static const metal::int_ num_params = 2;
@@ -87,12 +87,18 @@ struct Equate : gcs::Constraint {
     };
 
     void add_to_problem(ceres::Problem& problem) {
-        problem.AddResidualBlock(
-            gcs::create_scalar_autodiff(new Functor_0{}),
-            nullptr,
-            &v1->value,
-            &v2->value
-        );
+        problem.AddResidualBlock(gcs::create_scalar_autodiff(new Functor_0{}),
+                                 nullptr,
+                                 &v1->value,
+                                 &v2->value);
+    }
+
+    std::vector<gcs::Equation> get_equations() const {
+        std::vector<gcs::Equation> eqns{};
+
+        eqns.push_back({{v1, v2}});
+
+        return eqns;
     }
 };
 
@@ -115,13 +121,19 @@ struct Difference : gcs::Constraint {
     };
 
     void add_to_problem(ceres::Problem& problem) {
-        problem.AddResidualBlock(
-            gcs::create_scalar_autodiff(new Functor_0{}),
-            nullptr,
-            &v1->value,
-            &v2->value,
-            &diff->value
-        );
+        problem.AddResidualBlock(gcs::create_scalar_autodiff(new Functor_0{}),
+                                 nullptr,
+                                 &v1->value,
+                                 &v2->value,
+                                 &diff->value);
+    }
+
+    std::vector<gcs::Equation> get_equations() const {
+        std::vector<gcs::Equation> eqns{};
+
+        eqns.push_back({{v1, v2, diff}});
+
+        return eqns;
     }
 };
 
@@ -136,23 +148,45 @@ struct PointOnLine : gcs::Constraint {
         static const metal::int_ num_params = 6;
 
         template <typename T>
-        bool operator()(const T* point_x, const T* point_y, const T* line_p1_x, const T* line_p1_y, const T* line_p2_x, const T* line_p2_y, T* r) const {
-            *r = point_on_line(*point_x, *point_y, *line_p1_x, *line_p1_y, *line_p2_x, *line_p2_y);
+        bool operator()(const T* point_x,
+                        const T* point_y,
+                        const T* line_p1_x,
+                        const T* line_p1_y,
+                        const T* line_p2_x,
+                        const T* line_p2_y,
+                        T* r) const {
+            *r = point_on_line(*point_x,
+                               *point_y,
+                               *line_p1_x,
+                               *line_p1_y,
+                               *line_p2_x,
+                               *line_p2_y);
             return true;
         }
     };
 
     void add_to_problem(ceres::Problem& problem) {
-        problem.AddResidualBlock(
-            gcs::create_scalar_autodiff(new Functor_0{}),
-            nullptr,
-            &point->x.value,
-            &point->y.value,
-            &line->p1.x.value,
-            &line->p1.y.value,
-            &line->p2.x.value,
-            &line->p2.y.value
-        );
+        problem.AddResidualBlock(gcs::create_scalar_autodiff(new Functor_0{}),
+                                 nullptr,
+                                 &point->x.value,
+                                 &point->y.value,
+                                 &line->p1.x.value,
+                                 &line->p1.y.value,
+                                 &line->p2.x.value,
+                                 &line->p2.y.value);
+    }
+
+    std::vector<gcs::Equation> get_equations() const {
+        std::vector<gcs::Equation> eqns{};
+
+        eqns.push_back({{&point->x,
+                         &point->y,
+                         &line->p1.x,
+                         &line->p1.y,
+                         &line->p2.x,
+                         &line->p2.y}});
+
+        return eqns;
     }
 };
 
@@ -183,18 +217,23 @@ struct CoincidentPoints : gcs::Constraint {
     };
 
     void add_to_problem(ceres::Problem& problem) {
-        problem.AddResidualBlock(
-            gcs::create_scalar_autodiff(new Functor_0{}),
-            nullptr,
-            &p1->x.value,
-            &p2->x.value
-        );
-        problem.AddResidualBlock(
-            gcs::create_scalar_autodiff(new Functor_1{}),
-            nullptr,
-            &p1->y.value,
-            &p2->y.value
-        );
+        problem.AddResidualBlock(gcs::create_scalar_autodiff(new Functor_0{}),
+                                 nullptr,
+                                 &p1->x.value,
+                                 &p2->x.value);
+        problem.AddResidualBlock(gcs::create_scalar_autodiff(new Functor_1{}),
+                                 nullptr,
+                                 &p1->y.value,
+                                 &p2->y.value);
+    }
+
+    std::vector<gcs::Equation> get_equations() const {
+        std::vector<gcs::Equation> eqns{};
+
+        eqns.push_back({{&p1->x, &p2->x}});
+        eqns.push_back({{&p1->y, &p2->y}});
+
+        return eqns;
     }
 };
 
@@ -210,22 +249,33 @@ struct DistancePoints : gcs::Constraint {
         static const metal::int_ num_params = 5;
 
         template <typename T>
-        bool operator()(const T* p1_x, const T* p1_y, const T* p2_x, const T* p2_y, const T* d, T* r) const {
+        bool operator()(const T* p1_x,
+                        const T* p1_y,
+                        const T* p2_x,
+                        const T* p2_y,
+                        const T* d,
+                        T* r) const {
             *r = distance(*p1_x, *p1_y, *p2_x, *p2_y, *d);
             return true;
         }
     };
 
     void add_to_problem(ceres::Problem& problem) {
-        problem.AddResidualBlock(
-            gcs::create_scalar_autodiff(new Functor_0{}),
-            nullptr,
-            &p1->x.value,
-            &p1->y.value,
-            &p2->x.value,
-            &p2->y.value,
-            &d->value
-        );
+        problem.AddResidualBlock(gcs::create_scalar_autodiff(new Functor_0{}),
+                                 nullptr,
+                                 &p1->x.value,
+                                 &p1->y.value,
+                                 &p2->x.value,
+                                 &p2->y.value,
+                                 &d->value);
+    }
+
+    std::vector<gcs::Equation> get_equations() const {
+        std::vector<gcs::Equation> eqns{};
+
+        eqns.push_back({{&p1->x, &p1->y, &p2->x, &p2->y, d}});
+
+        return eqns;
     }
 };
 
@@ -233,29 +283,40 @@ struct LineLength : gcs::Constraint {
     gcs::g2d::Line* line;
     gcs::Variable* d;
 
-    LineLength(gcs::g2d::Line& line, gcs::Variable& d)
-        : line{&line}, d{&d} {}
+    LineLength(gcs::g2d::Line& line, gcs::Variable& d) : line{&line}, d{&d} {}
 
     struct Functor_0 {
         static const metal::int_ num_params = 5;
 
         template <typename T>
-        bool operator()(const T* line_p1_x, const T* line_p1_y, const T* line_p2_x, const T* line_p2_y, const T* d, T* r) const {
+        bool operator()(const T* line_p1_x,
+                        const T* line_p1_y,
+                        const T* line_p2_x,
+                        const T* line_p2_y,
+                        const T* d,
+                        T* r) const {
             *r = distance(*line_p1_x, *line_p1_y, *line_p2_x, *line_p2_y, *d);
             return true;
         }
     };
 
     void add_to_problem(ceres::Problem& problem) {
-        problem.AddResidualBlock(
-            gcs::create_scalar_autodiff(new Functor_0{}),
-            nullptr,
-            &line->p1.x.value,
-            &line->p1.y.value,
-            &line->p2.x.value,
-            &line->p2.y.value,
-            &d->value
-        );
+        problem.AddResidualBlock(gcs::create_scalar_autodiff(new Functor_0{}),
+                                 nullptr,
+                                 &line->p1.x.value,
+                                 &line->p1.y.value,
+                                 &line->p2.x.value,
+                                 &line->p2.y.value,
+                                 &d->value);
+    }
+
+    std::vector<gcs::Equation> get_equations() const {
+        std::vector<gcs::Equation> eqns{};
+
+        eqns.push_back(
+            {{&line->p1.x, &line->p1.y, &line->p2.x, &line->p2.y, d}});
+
+        return eqns;
     }
 };
 
@@ -264,31 +325,58 @@ struct OffsetLinePoint : gcs::Constraint {
     gcs::g2d::Point* point;
     gcs::Variable* d;
 
-    OffsetLinePoint(gcs::g2d::Line& line, gcs::g2d::Point& point, gcs::Variable& d)
+    OffsetLinePoint(gcs::g2d::Line& line,
+                    gcs::g2d::Point& point,
+                    gcs::Variable& d)
         : line{&line}, point{&point}, d{&d} {}
 
     struct Functor_0 {
         static const metal::int_ num_params = 7;
 
         template <typename T>
-        bool operator()(const T* line_p1_x, const T* line_p1_y, const T* line_p2_x, const T* line_p2_y, const T* point_x, const T* point_y, const T* d, T* r) const {
-            *r = offset_line_point(*line_p1_x, *line_p1_y, *line_p2_x, *line_p2_y, *point_x, *point_y, *d);
+        bool operator()(const T* line_p1_x,
+                        const T* line_p1_y,
+                        const T* line_p2_x,
+                        const T* line_p2_y,
+                        const T* point_x,
+                        const T* point_y,
+                        const T* d,
+                        T* r) const {
+            *r = offset_line_point(*line_p1_x,
+                                   *line_p1_y,
+                                   *line_p2_x,
+                                   *line_p2_y,
+                                   *point_x,
+                                   *point_y,
+                                   *d);
             return true;
         }
     };
 
     void add_to_problem(ceres::Problem& problem) {
-        problem.AddResidualBlock(
-            gcs::create_scalar_autodiff(new Functor_0{}),
-            nullptr,
-            &line->p1.x.value,
-            &line->p1.y.value,
-            &line->p2.x.value,
-            &line->p2.y.value,
-            &point->x.value,
-            &point->y.value,
-            &d->value
-        );
+        problem.AddResidualBlock(gcs::create_scalar_autodiff(new Functor_0{}),
+                                 nullptr,
+                                 &line->p1.x.value,
+                                 &line->p1.y.value,
+                                 &line->p2.x.value,
+                                 &line->p2.y.value,
+                                 &point->x.value,
+                                 &point->y.value,
+                                 &d->value);
+    }
+
+    std::vector<gcs::Equation> get_equations() const {
+        std::vector<gcs::Equation> eqns{};
+
+        eqns.push_back({{&line->p1.x,
+                         &line->p1.y,
+                         &line->p2.x,
+                         &line->p2.y,
+                         &point->x,
+                         &point->y,
+                         d}});
+
+        return eqns;
     }
 };
 
@@ -297,33 +385,66 @@ struct AngleBetweenLines : gcs::Constraint {
     gcs::g2d::Line* line2;
     gcs::Variable* angle;
 
-    AngleBetweenLines(gcs::g2d::Line& line1, gcs::g2d::Line& line2, gcs::Variable& angle)
+    AngleBetweenLines(gcs::g2d::Line& line1,
+                      gcs::g2d::Line& line2,
+                      gcs::Variable& angle)
         : line1{&line1}, line2{&line2}, angle{&angle} {}
 
     struct Functor_0 {
         static const metal::int_ num_params = 9;
 
         template <typename T>
-        bool operator()(const T* line1_p1_x, const T* line1_p1_y, const T* line1_p2_x, const T* line1_p2_y, const T* line2_p1_x, const T* line2_p1_y, const T* line2_p2_x, const T* line2_p2_y, const T* angle, T* r) const {
-            *r = angle_points_4(*line1_p1_x, *line1_p1_y, *line1_p2_x, *line1_p2_y, *line2_p1_x, *line2_p1_y, *line2_p2_x, *line2_p2_y, *angle);
+        bool operator()(const T* line1_p1_x,
+                        const T* line1_p1_y,
+                        const T* line1_p2_x,
+                        const T* line1_p2_y,
+                        const T* line2_p1_x,
+                        const T* line2_p1_y,
+                        const T* line2_p2_x,
+                        const T* line2_p2_y,
+                        const T* angle,
+                        T* r) const {
+            *r = angle_point_4(*line1_p1_x,
+                               *line1_p1_y,
+                               *line1_p2_x,
+                               *line1_p2_y,
+                               *line2_p1_x,
+                               *line2_p1_y,
+                               *line2_p2_x,
+                               *line2_p2_y,
+                               *angle);
             return true;
         }
     };
 
     void add_to_problem(ceres::Problem& problem) {
-        problem.AddResidualBlock(
-            gcs::create_scalar_autodiff(new Functor_0{}),
-            nullptr,
-            &line1->p1.x.value,
-            &line1->p1.y.value,
-            &line1->p2.x.value,
-            &line1->p2.y.value,
-            &line2->p1.x.value,
-            &line2->p1.y.value,
-            &line2->p2.x.value,
-            &line2->p2.y.value,
-            &angle->value
-        );
+        problem.AddResidualBlock(gcs::create_scalar_autodiff(new Functor_0{}),
+                                 nullptr,
+                                 &line1->p1.x.value,
+                                 &line1->p1.y.value,
+                                 &line1->p2.x.value,
+                                 &line1->p2.y.value,
+                                 &line2->p1.x.value,
+                                 &line2->p1.y.value,
+                                 &line2->p2.x.value,
+                                 &line2->p2.y.value,
+                                 &angle->value);
+    }
+
+    std::vector<gcs::Equation> get_equations() const {
+        std::vector<gcs::Equation> eqns{};
+
+        eqns.push_back({{&line1->p1.x,
+                         &line1->p1.y,
+                         &line1->p2.x,
+                         &line1->p2.y,
+                         &line2->p1.x,
+                         &line2->p1.y,
+                         &line2->p2.x,
+                         &line2->p2.y,
+                         angle}});
+
+        return eqns;
     }
 };
 
@@ -333,31 +454,49 @@ struct AngleThreePoints : gcs::Constraint {
     gcs::g2d::Point* p3;
     gcs::Variable* angle;
 
-    AngleThreePoints(gcs::g2d::Point& p1, gcs::g2d::Point& p2, gcs::g2d::Point& p3, gcs::Variable& angle)
+    AngleThreePoints(gcs::g2d::Point& p1,
+                     gcs::g2d::Point& p2,
+                     gcs::g2d::Point& p3,
+                     gcs::Variable& angle)
         : p1{&p1}, p2{&p2}, p3{&p3}, angle{&angle} {}
 
     struct Functor_0 {
         static const metal::int_ num_params = 7;
 
         template <typename T>
-        bool operator()(const T* p1_x, const T* p1_y, const T* p2_x, const T* p2_y, const T* p3_x, const T* p3_y, const T* angle, T* r) const {
-            *r = angle_points_3(*p1_x, *p1_y, *p2_x, *p2_y, *p3_x, *p3_y, *angle);
+        bool operator()(const T* p1_x,
+                        const T* p1_y,
+                        const T* p2_x,
+                        const T* p2_y,
+                        const T* p3_x,
+                        const T* p3_y,
+                        const T* angle,
+                        T* r) const {
+            *r =
+                angle_point_3(*p1_x, *p1_y, *p2_x, *p2_y, *p3_x, *p3_y, *angle);
             return true;
         }
     };
 
     void add_to_problem(ceres::Problem& problem) {
-        problem.AddResidualBlock(
-            gcs::create_scalar_autodiff(new Functor_0{}),
-            nullptr,
-            &p1->x.value,
-            &p1->y.value,
-            &p2->x.value,
-            &p2->y.value,
-            &p3->x.value,
-            &p3->y.value,
-            &angle->value
-        );
+        problem.AddResidualBlock(gcs::create_scalar_autodiff(new Functor_0{}),
+                                 nullptr,
+                                 &p1->x.value,
+                                 &p1->y.value,
+                                 &p2->x.value,
+                                 &p2->y.value,
+                                 &p3->x.value,
+                                 &p3->y.value,
+                                 &angle->value);
+    }
+
+    std::vector<gcs::Equation> get_equations() const {
+        std::vector<gcs::Equation> eqns{};
+
+        eqns.push_back(
+            {{&p1->x, &p1->y, &p2->x, &p2->y, &p3->x, &p3->y, angle}});
+
+        return eqns;
     }
 };
 
@@ -372,22 +511,35 @@ struct AngleOfLine : gcs::Constraint {
         static const metal::int_ num_params = 5;
 
         template <typename T>
-        bool operator()(const T* line_p1_x, const T* line_p1_y, const T* line_p2_x, const T* line_p2_y, const T* angle, T* r) const {
-            *r = angle_points_2(*line_p1_x, *line_p1_y, *line_p2_x, *line_p2_y, *angle);
+        bool operator()(const T* line_p1_x,
+                        const T* line_p1_y,
+                        const T* line_p2_x,
+                        const T* line_p2_y,
+                        const T* angle,
+                        T* r) const {
+            *r = angle_point_2(
+                *line_p1_x, *line_p1_y, *line_p2_x, *line_p2_y, *angle);
             return true;
         }
     };
 
     void add_to_problem(ceres::Problem& problem) {
-        problem.AddResidualBlock(
-            gcs::create_scalar_autodiff(new Functor_0{}),
-            nullptr,
-            &line->p1.x.value,
-            &line->p1.y.value,
-            &line->p2.x.value,
-            &line->p2.y.value,
-            &angle->value
-        );
+        problem.AddResidualBlock(gcs::create_scalar_autodiff(new Functor_0{}),
+                                 nullptr,
+                                 &line->p1.x.value,
+                                 &line->p1.y.value,
+                                 &line->p2.x.value,
+                                 &line->p2.y.value,
+                                 &angle->value);
+    }
+
+    std::vector<gcs::Equation> get_equations() const {
+        std::vector<gcs::Equation> eqns{};
+
+        eqns.push_back(
+            {{&line->p1.x, &line->p1.y, &line->p2.x, &line->p2.y, angle}});
+
+        return eqns;
     }
 };
 
@@ -402,22 +554,41 @@ struct PointOnCircle : gcs::Constraint {
         static const metal::int_ num_params = 5;
 
         template <typename T>
-        bool operator()(const T* point_x, const T* point_y, const T* circle_center_x, const T* circle_center_y, const T* circle_radius, T* r) const {
-            *r = point_on_circle(*point_x, *point_y, *circle_center_x, *circle_center_y, *circle_radius);
+        bool operator()(const T* point_x,
+                        const T* point_y,
+                        const T* circle_center_x,
+                        const T* circle_center_y,
+                        const T* circle_radius,
+                        T* r) const {
+            *r = point_on_circle(*point_x,
+                                 *point_y,
+                                 *circle_center_x,
+                                 *circle_center_y,
+                                 *circle_radius);
             return true;
         }
     };
 
     void add_to_problem(ceres::Problem& problem) {
-        problem.AddResidualBlock(
-            gcs::create_scalar_autodiff(new Functor_0{}),
-            nullptr,
-            &point->x.value,
-            &point->y.value,
-            &circle->center.x.value,
-            &circle->center.y.value,
-            &circle->radius.value
-        );
+        problem.AddResidualBlock(gcs::create_scalar_autodiff(new Functor_0{}),
+                                 nullptr,
+                                 &point->x.value,
+                                 &point->y.value,
+                                 &circle->center.x.value,
+                                 &circle->center.y.value,
+                                 &circle->radius.value);
+    }
+
+    std::vector<gcs::Equation> get_equations() const {
+        std::vector<gcs::Equation> eqns{};
+
+        eqns.push_back({{&point->x,
+                         &point->y,
+                         &circle->center.x,
+                         &circle->center.y,
+                         &circle->radius}});
+
+        return eqns;
     }
 };
 
@@ -432,24 +603,49 @@ struct TangentLineCircle : gcs::Constraint {
         static const metal::int_ num_params = 7;
 
         template <typename T>
-        bool operator()(const T* line_p1_x, const T* line_p1_y, const T* line_p2_x, const T* line_p2_y, const T* circle_center_x, const T* circle_center_y, const T* circle_radius, T* r) const {
-            *r = tangent_line_circle(*line_p1_x, *line_p1_y, *line_p2_x, *line_p2_y, *circle_center_x, *circle_center_y, *circle_radius);
+        bool operator()(const T* line_p1_x,
+                        const T* line_p1_y,
+                        const T* line_p2_x,
+                        const T* line_p2_y,
+                        const T* circle_center_x,
+                        const T* circle_center_y,
+                        const T* circle_radius,
+                        T* r) const {
+            *r = tangent_line_circle(*line_p1_x,
+                                     *line_p1_y,
+                                     *line_p2_x,
+                                     *line_p2_y,
+                                     *circle_center_x,
+                                     *circle_center_y,
+                                     *circle_radius);
             return true;
         }
     };
 
     void add_to_problem(ceres::Problem& problem) {
-        problem.AddResidualBlock(
-            gcs::create_scalar_autodiff(new Functor_0{}),
-            nullptr,
-            &line->p1.x.value,
-            &line->p1.y.value,
-            &line->p2.x.value,
-            &line->p2.y.value,
-            &circle->center.x.value,
-            &circle->center.y.value,
-            &circle->radius.value
-        );
+        problem.AddResidualBlock(gcs::create_scalar_autodiff(new Functor_0{}),
+                                 nullptr,
+                                 &line->p1.x.value,
+                                 &line->p1.y.value,
+                                 &line->p2.x.value,
+                                 &line->p2.y.value,
+                                 &circle->center.x.value,
+                                 &circle->center.y.value,
+                                 &circle->radius.value);
+    }
+
+    std::vector<gcs::Equation> get_equations() const {
+        std::vector<gcs::Equation> eqns{};
+
+        eqns.push_back({{&line->p1.x,
+                         &line->p1.y,
+                         &line->p2.x,
+                         &line->p2.y,
+                         &circle->center.x,
+                         &circle->center.y,
+                         &circle->radius}});
+
+        return eqns;
     }
 };
 
@@ -464,22 +660,44 @@ struct TangentCircles : gcs::Constraint {
         static const metal::int_ num_params = 6;
 
         template <typename T>
-        bool operator()(const T* c1_center_x, const T* c1_center_y, const T* c1_radius, const T* c2_center_x, const T* c2_center_y, const T* c2_radius, T* r) const {
-            *r = tangent_circles(*c1_center_x, *c1_center_y, *c1_radius, *c2_center_x, *c2_center_y, *c2_radius);
+        bool operator()(const T* c1_center_x,
+                        const T* c1_center_y,
+                        const T* c1_radius,
+                        const T* c2_center_x,
+                        const T* c2_center_y,
+                        const T* c2_radius,
+                        T* r) const {
+            *r = tangent_circles(*c1_center_x,
+                                 *c1_center_y,
+                                 *c1_radius,
+                                 *c2_center_x,
+                                 *c2_center_y,
+                                 *c2_radius);
             return true;
         }
     };
 
     void add_to_problem(ceres::Problem& problem) {
-        problem.AddResidualBlock(
-            gcs::create_scalar_autodiff(new Functor_0{}),
-            nullptr,
-            &c1->center.x.value,
-            &c1->center.y.value,
-            &c1->radius.value,
-            &c2->center.x.value,
-            &c2->center.y.value,
-            &c2->radius.value
-        );
+        problem.AddResidualBlock(gcs::create_scalar_autodiff(new Functor_0{}),
+                                 nullptr,
+                                 &c1->center.x.value,
+                                 &c1->center.y.value,
+                                 &c1->radius.value,
+                                 &c2->center.x.value,
+                                 &c2->center.y.value,
+                                 &c2->radius.value);
+    }
+
+    std::vector<gcs::Equation> get_equations() const {
+        std::vector<gcs::Equation> eqns{};
+
+        eqns.push_back({{&c1->center.x,
+                         &c1->center.y,
+                         &c1->radius,
+                         &c2->center.x,
+                         &c2->center.y,
+                         &c2->radius}});
+
+        return eqns;
     }
 };
