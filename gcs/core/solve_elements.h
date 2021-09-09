@@ -1,6 +1,9 @@
 #ifndef GCS_CORE_SOLVE_ELEMENTS
 #define GCS_CORE_SOLVE_ELEMENTS
 
+#include <ceres/ceres.h>
+
+#include <functional>
 #include <map>
 #include <memory>
 #include <queue>
@@ -28,11 +31,14 @@ struct Variable {
 
 struct Equation {
     std::unordered_set<Variable*> variables;
+    std::function<void(ceres::Problem&)> make_residual_ftor;
 
     Equation(Equation&& equation);
 
-    Equation(const decltype(variables)& vars);
-    Equation(decltype(variables)&& vars);
+    Equation(const decltype(variables)& vars,
+             decltype(make_residual_ftor) make_residual_ftor);
+    Equation(decltype(variables)&& vars,
+             decltype(make_residual_ftor) make_residual_ftor);
 
     void init();
 };

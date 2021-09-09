@@ -40,7 +40,13 @@ struct SetConstant : gcs::Constraint {
     std::vector<gcs::Equation> get_equations() const {
         std::vector<gcs::Equation> eqns{};
 
-        eqns.push_back({{var}});
+        eqns.push_back(
+            {{var}, [&](ceres::Problem& problem) {
+                 problem.AddResidualBlock(
+                     gcs::create_scalar_autodiff(new Functor_0{value}),
+                     nullptr,
+                     &var->value);
+             }});
 
         return eqns;
     }
@@ -72,7 +78,13 @@ struct Equate : gcs::Constraint {
     std::vector<gcs::Equation> get_equations() const {
         std::vector<gcs::Equation> eqns{};
 
-        eqns.push_back({{v1, v2}});
+        eqns.push_back({{v1, v2}, [&](ceres::Problem& problem) {
+                            problem.AddResidualBlock(
+                                gcs::create_scalar_autodiff(new Functor_0{}),
+                                nullptr,
+                                &v1->value,
+                                &v2->value);
+                        }});
 
         return eqns;
     }
@@ -107,7 +119,14 @@ struct Difference : gcs::Constraint {
     std::vector<gcs::Equation> get_equations() const {
         std::vector<gcs::Equation> eqns{};
 
-        eqns.push_back({{v1, v2, diff}});
+        eqns.push_back({{v1, v2, diff}, [&](ceres::Problem& problem) {
+                            problem.AddResidualBlock(
+                                gcs::create_scalar_autodiff(new Functor_0{}),
+                                nullptr,
+                                &v1->value,
+                                &v2->value,
+                                &diff->value);
+                        }});
 
         return eqns;
     }

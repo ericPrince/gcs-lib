@@ -94,8 +94,13 @@ class EquationUsage(BaseModel):
             ]
         )
 
-    def make_equation_instantiation(self, constraint: 'Constraint', geom_types):
-        return '{{' + ', '.join([f'{"&" if "." in var else ""}{var.replace(".", "->", 1)}' for var in self.get_variables(constraint, geom_types)]) + '}}'
+    def make_equation_instantiation(self, constraint: 'Constraint', functor_suffix, geom_types):
+        return '{{' + ', '.join(
+            [
+                f'{"&" if "." in var else ""}{var.replace(".", "->", 1)}' 
+                for var in self.get_variables(constraint, geom_types)
+            ]
+        ) + '}, ' + '[&] (ceres::Problem& problem) {' + self.make_residual_statement(constraint, functor_suffix, geom_types) + '}' + '}'
 
 
 class ConstraintDefinition(BaseModel):
@@ -145,7 +150,7 @@ class ConstraintDefinition(BaseModel):
                 # f'        return {{{", ".join([eqn.make_equation_instantiation(self, geom_types) for eqn in self.equations])}}};'
                 '        std::vector<gcs::Equation> eqns{};',
                 '',
-                '\n'.join([f'        eqns.push_back({eqn.make_equation_instantiation(self, geom_types)});' for eqn in self.equations]),
+                '\n'.join([f'        eqns.push_back({eqn.make_equation_instantiation(self, str(i), geom_types)});' for i, eqn in enumerate(self.equations)]),
                 '',
                 '        return eqns;',
                 '    }',

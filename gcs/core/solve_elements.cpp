@@ -16,7 +16,8 @@ void Variable::set_solved() {
 // Equation
 
 Equation::Equation(Equation&& equation)
-    : variables{std::move(equation.variables)} {
+    : variables{std::move(equation.variables)},
+      make_residual_ftor{std::move(equation.make_residual_ftor)} {
     for (auto& var : this->variables) {
         var->equations.erase(&equation);
     }
@@ -24,11 +25,15 @@ Equation::Equation(Equation&& equation)
     this->init();
 }
 
-Equation::Equation(const decltype(variables)& vars) : variables{vars} {
+Equation::Equation(const decltype(variables)& vars,
+                   decltype(make_residual_ftor) make_residual_ftor)
+    : variables{vars}, make_residual_ftor{make_residual_ftor} {
     this->init();
 }
 
-Equation::Equation(decltype(variables)&& vars) : variables{vars} {
+Equation::Equation(decltype(variables)&& vars,
+                   decltype(make_residual_ftor) make_residual_ftor)
+    : variables{vars}, make_residual_ftor{make_residual_ftor} {
     this->init();
 }
 
