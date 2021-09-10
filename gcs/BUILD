@@ -11,6 +11,7 @@ cc_test(
         "//gcs/basic",
         "//gcs/core",
         "//gcs/g2d",
+        "@boost//:asio",
         "@com_github_ceres-solver_ceres-solver//:ceres",
     ],
 )

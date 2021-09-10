@@ -1,5 +1,6 @@
 #include <ceres/ceres.h>
 
+#include <boost/asio.hpp>
 #include <iostream>
 
 #include "gcs/basic/constraints.h"
@@ -45,6 +46,7 @@ ceres::Solver::Summary single_solve(EquationSet& eqn_set) {
     return summary;
 }
 
+// TODO: move this to gcs/core
 struct GcsProblem {
     std::unordered_set<Variable*> variables;
     std::unordered_set<Geometry*> geoms;
@@ -76,44 +78,124 @@ struct GcsProblem {
     bool remove_geometry(Geometry& geom);
     bool remove_constraint(Constraint& constraint);
 
-    void solve() {
+    ~GcsProblem() {
+        for (auto eq : equation_sets) {
+            delete eq;
+        }
+    }
+
+    void split() {
+        auto old_equation_sets = equation_sets;
+        equation_sets = {};
+        prereqs = {};
+        is_prereq_of = {};
+
+        for (auto& eq : old_equation_sets) {
+            auto split_sets = gcs::split(*eq);
+            delete eq;
+
+            for (auto& eq2 : split_sets) {
+                auto eq3 = new EquationSet{std::move(eq2)};
+                equation_sets.insert(eq3);
+                prereqs.emplace(eq3, decltype(prereqs)::mapped_type{});
+                is_prereq_of.emplace(eq3,
+                                     decltype(is_prereq_of)::mapped_type{});
+            }
+        }
+
+        // which equation set does each equation belong to (TODO: track this in
+        // the equation object?)
+        std::unordered_map<Equation*, EquationSet*> containing_set = {};
+
+        for (auto& eqn_set : equation_sets) {
+            for (auto& eq : eqn_set->equations) {
+                containing_set.emplace(eq, eqn_set);
+            }
+        }
+
+        // fill out the dependencies/prereqs between equation sets
+        for (auto& eqn_set : equation_sets) {
+            // from EquationSet::set_solved():
+            //   at the end, a variable will point to equations that require it
+            //   in order to be solved and an equation will point to the
+            //   variables it solves for
+
+            for (auto& var : eqn_set->get_variables()) {
+                // var is solved by this equation set
+                for (auto& eq : var->equations) {
+                    // eq needs var to be calculated in order to be solvable
+                    // so the eqn set that uses eq has this eqn set as a dep
+                    auto dep_eqn_set = containing_set[eq];
+                    assert(dep_eqn_set != eqn_set);
+
+                    prereqs[dep_eqn_set].insert(eqn_set);
+                    is_prereq_of[eqn_set].insert(dep_eqn_set);
+                }
+            }
+        }
+    }
+
+    void solve(size_t pool_size = 0) {
+        if (pool_size == 0) {
+            pool_size = std::thread::hardware_concurrency();
+        }
+        if (pool_size > equation_sets.size()) {
+            pool_size = equation_sets.size();
+        }
+
+        // track equation set dependencies as they get solved
         auto solve_prereqs = prereqs;
         auto solve_is_prereq_of = is_prereq_of;
+        auto not_solved = equation_sets;
 
-        std::queue<EquationSet*> ready_to_solve = {};
+        // set up a thread pool
+        boost::asio::thread_pool pool{pool_size};
+        std::mutex mtx;
+
+        // this function will be passed to the thread pool
+        //
+        // It runs ceres solver on the problem, then updates the active equation
+        // set dependencies. If this update makes it so another equation set
+        // does not depend on anything else, it gets passed to the thread pool
+        // to solve and do the same thing
+        std::function<void(EquationSet*)> solve_func =
+            [&](EquationSet* eqn_set) {
+                single_solve(*eqn_set);
+
+                // once the equation set has been solved:
+                {
+                    std::lock_guard<std::mutex> lock{mtx};
+
+                    for (auto& req_by : solve_is_prereq_of[eqn_set]) {
+                        // the just-solved equation is no longer holding up
+                        // its dependencies
+                        solve_prereqs[req_by].erase(eqn_set);
+
+                        // if the dependency isn't waiting on anything
+                        // else, it is ready to solve
+                        if (solve_prereqs[req_by].size() == 0 &&
+                            not_solved.find(req_by) != not_solved.end()) {
+                            not_solved.erase(eqn_set);
+                            boost::asio::post(pool,
+                                              std::bind(solve_func, req_by));
+                        }
+                    }
+                }
+            };
 
         for (auto& eq_pair : solve_prereqs) {
             auto& eq = eq_pair.first;
             auto& pre = eq_pair.second;
 
             if (pre.size() == 0) {
-                ready_to_solve.push(eq);
+                not_solved.erase(eq);
+                boost::asio::post(pool, std::bind(solve_func, eq));
             }
         }
 
-        while (ready_to_solve.size() > 0) {
-            auto& eq = ready_to_solve.front();
-            ready_to_solve.pop();
+        pool.join();
 
-            // TODO: actually solve the problem and update the variable values
-
-            // once the equation set has been solved:
-            for (auto& eq_pair : solve_is_prereq_of) {
-                for (auto& req_by : eq_pair.second) {
-                    // the just-solved equation is no longer holding up its
-                    // dependencies
-                    solve_is_prereq_of[req_by].erase(eq);
-
-                    // if the dependency isn't waiting on anything else, it is
-                    // ready to solve
-                    if (solve_is_prereq_of[req_by].size() == 0) {
-                        ready_to_solve.push(req_by);
-                    }
-                }
-            }
-        }
-
-        for (auto& eq_pair : solve_is_prereq_of) {
+        for (auto& eq_pair : solve_prereqs) {
             assert(eq_pair.second.size() == 0 &&
                    "There should be no equation sets waiting on prereqs");
         }
@@ -180,56 +262,18 @@ int main(int argc, char** argv) {
         equation_set.add_equation(eqn);
     }
 
-    // ceres::Problem problem{};
-
-    // for (auto& constraint : constraints) {
-    //     // constraint->add_to_problem(problem);
-    //     for (auto& eqn : constraint->get_equations()) {
-    //         eqn.make_residual_ftor(problem);
-    //     }
-    // }
-
-    // ceres::Solver::Options options{};
-    // options.linear_solver_type = ceres::LinearSolverType::DENSE_QR;
-    // options.minimizer_progress_to_stdout = true;
-
-    // ceres::Solver::Summary summary;
-    // ceres::Solve(options, &problem, &summary);
-
-    ceres::Solver::Summary summary;
-    // note: commenting below line out to test solving smaller equation sets in
-    // order
-
-    // auto summary = gcs::single_solve(equation_set);
-
-    // std::cout << summary.BriefReport() << std::endl;
-    // std::cout << "p2.x: " << p2.x.value << std::endl;
-    // std::cout << "p2.y: " << p2.y.value << std::endl;
-    // std::cout << "p3.x: " << p3.x.value << std::endl;
-    // std::cout << "p3.y: " << p3.y.value << std::endl;
-    // std::cout << "c1.r:  " << c1.radius.value << std::endl;
-
-    // test equation set splitting
-    auto split_equation_sets = gcs::split(equation_set);
-
-    std::cout << std::endl
-              << "Split equation sets: " << split_equation_sets.size()
-              << std::endl;
-    std::cout << "  number of equations: " << equation_set.equations.size()
-              << std::endl;
-    std::cout << "  number of variables: "
-              << equation_set.get_variables().size() << std::endl;
-    std::cout << "  degrees of freedom: " << equation_set.degrees_of_freedom()
+    // make problem, split, and solve
+    gcs::GcsProblem gcs_problem{};
+    gcs_problem.equation_sets.insert(new gcs::EquationSet{equation_set});
+    gcs_problem.split();
+    std::cout << "Split using GcsProblem: " << gcs_problem.equation_sets.size()
               << std::endl;
 
-    for (auto& sub_eqn_set : split_equation_sets) {
-        summary = gcs::single_solve(sub_eqn_set);
+    gcs_problem.solve();
 
-        std::cout << summary.BriefReport() << std::endl;
-        std::cout << "p2.x: " << p2.x.value << std::endl;
-        std::cout << "p2.y: " << p2.y.value << std::endl;
-        std::cout << "p3.x: " << p3.x.value << std::endl;
-        std::cout << "p3.y: " << p3.y.value << std::endl;
-        std::cout << "c1.r:  " << c1.radius.value << std::endl;
-    }
+    std::cout << "p2.x: " << p2.x.value << std::endl;
+    std::cout << "p2.y: " << p2.y.value << std::endl;
+    std::cout << "p3.x: " << p3.x.value << std::endl;
+    std::cout << "p3.y: " << p3.y.value << std::endl;
+    std::cout << "c1.r:  " << c1.radius.value << std::endl;
 }
