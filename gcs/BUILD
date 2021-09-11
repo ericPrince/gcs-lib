@@ -1,4 +1,5 @@
 load("@rules_cc//cc:defs.bzl", "cc_test")
+load("//:lint.bzl", "clang_format", "cppcheck")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -12,4 +13,17 @@ cc_test(
         "//gcs/core",
         "//gcs/g2d",
     ],
+)
+
+clang_format(
+    name = "clang_format_all",
+    srcs = glob([
+        "**/*.cpp",
+        "**/*.h",
+    ]),
+)
+
+cppcheck(
+    name = "cppcheck_all",
+    srcs = glob(["**"]),
 )
