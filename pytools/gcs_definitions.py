@@ -166,22 +166,6 @@ class GcsDefinitions(BaseModel):
 
     def get_geom_types(self) -> Dict[str, GeometryDefinition]:
         return {f'{geom.namespace}.{geom.classname}': geom for geom in self.geometry_definitions}
-    
-    def make_structs(self) -> str:
-        geom_types = self.get_geom_types()
-
-        return '\n\n'.join(
-            [
-                '#include <vector>',
-                '#include <ceres/ceres.h>',
-                '#include <metal.h>',
-                '#include "gcs/core/core.h"',
-            ]
-            + [
-                geom.make_struct(geom_types) 
-                for geom in it.chain(self.geometry_definitions, self.constraint_definitions)
-            ]
-        )
 
 
 def main():
@@ -192,10 +176,16 @@ def main():
 
     gcs_defs = GcsDefinitions.parse_obj(gcs_data)
     geom_types = gcs_defs.get_geom_types()
-    # print(gcs_defs.make_structs())
 
-    with open('gcs_definitions.cpp', 'w') as fp:
-        fp.write(gcs_defs.make_structs())
+    ns_extra_constraint_inlcudes = {
+        'gcs.basic': [
+            '#include "gcs/basic/constraint_math.h"',
+        ],
+        'gcs.g2d': [
+            '#include "gcs/g2d/constraints_unsigned_math.h"',
+            '#include "gcs/g2d/geometry.h"',
+        ],
+    }
 
     # geoms
     namespaces = {}
@@ -285,7 +275,7 @@ def main():
                 '#include <ceres/ceres.h>',
                 '#include <metal.hpp>',
                 '#include "gcs/core/core.h"',
-        ])
+        ] + ns_extra_constraint_inlcudes.get(ns, []))
 
         struct_defs = '\n\n'.join([
             cstr.make_struct(geom_types) 
@@ -304,11 +294,6 @@ def main():
         header_file.parent.mkdir(parents=True, exist_ok=True)
         with header_file.open('w') as fp:
             fp.write(file_contents)
-
-
-    with open('gcs_definitions.cpp', 'w') as fp:
-        fp.write(gcs_defs.make_structs())
-
 
 
 if __name__ == '__main__':
