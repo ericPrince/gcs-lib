@@ -46,6 +46,8 @@ struct Equation {
 struct EquationSet {
     std::unordered_set<Equation*> equations;
 
+    ~EquationSet();
+
     // note: greater compare
     struct Compare {
         bool operator()(const EquationSet& a, const EquationSet& b);

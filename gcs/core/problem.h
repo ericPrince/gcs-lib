@@ -6,6 +6,7 @@
 #include <boost/asio.hpp>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 #include "gcs/core/constraints.h"
 #include "gcs/core/geometry.h"
@@ -20,6 +21,8 @@ struct Problem {
     std::unordered_set<Geometry*> geoms;
     std::unordered_set<Constraint*> constraints;
 
+    std::vector<gcs::Equation> equations;
+
     // set of all EquationSets (has ownership of pointers)
     std::unordered_set<EquationSet*> equation_sets;
     // All items in the set must be solved before the key can be solved
@@ -29,18 +32,18 @@ struct Problem {
         is_prereq_of;
 
     template <typename T>
-    bool add(T& item);
+    bool add(T* item);
 
-    bool add_variable(Variable& var);
-    bool add_geometry(Geometry& geom);
-    bool add_constraint(Constraint& constraint);
+    bool add_variable(Variable* var);
+    bool add_geometry(Geometry* geom);
+    bool add_constraint(Constraint* constraint);
 
     template <typename T>
-    bool remove(T& item);
+    bool remove(T* item);
 
-    bool remove_variable(Variable& var);
-    bool remove_geometry(Geometry& geom);
-    bool remove_constraint(Constraint& constraint);
+    bool remove_variable(Variable* var);
+    bool remove_geometry(Geometry* geom);
+    bool remove_constraint(Constraint* constraint);
 
     ~Problem();
 

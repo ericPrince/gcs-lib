@@ -48,26 +48,17 @@ int main(int argc, char** argv) {
     constraints.push_back(new gcs::basic::SetConstant{dx, d_x});     // f18
     constraints.push_back(new gcs::basic::SetConstant{dy, d_y});     // f19
 
-    // build single equation set from problem
-    gcs::EquationSet equation_set = {};
-    std::vector<gcs::Equation> equations;
-
-    for (auto& constraint : constraints) {
-        for (auto& eqn : constraint->get_equations()) {
-            equations.push_back(std::move(eqn));
-        }
-    }
-
-    for (auto& eqn : equations) {
-        equation_set.add_equation(eqn);
-    }
-
     // make problem, split, and solve
     gcs::Problem gcs_problem{};
-    gcs_problem.equation_sets.insert(new gcs::EquationSet{equation_set});
+
+    for (auto& constraint : constraints) {
+        gcs_problem.add(constraint);
+    }
+
     gcs_problem.split();
     std::cout << "Split using GcsProblem: " << gcs_problem.equation_sets.size()
-              << std::endl;
+              << std::endl
+              << std::flush;
 
     gcs_problem.solve();
 

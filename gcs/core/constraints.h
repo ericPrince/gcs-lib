@@ -16,7 +16,7 @@ struct Constraint {
 
     virtual void add_to_problem(ceres::Problem& problem) = 0;
 
-    virtual std::vector<gcs::Equation> get_equations() const = 0;
+    virtual std::vector<gcs::Equation*> get_equations() const = 0;
 };
 
 #ifndef CSTR_CREATE_FUNCTOR_

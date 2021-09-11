@@ -45,11 +45,86 @@ gcs::Problem::~Problem() {
     }
 }
 
+template <>
+bool gcs::Problem::add(Variable* var) {
+    return add_variable(var);
+}
+
+template <>
+bool gcs::Problem::add(Constraint* constraint) {
+    return add_constraint(constraint);
+}
+
+template <>
+bool gcs::Problem::add(Geometry* geom) {
+    return add_geometry(geom);
+}
+
+bool gcs::Problem::add_variable(Variable* var) {
+    variables.insert(var);
+    return true;
+}
+
+bool gcs::Problem::add_constraint(Constraint* constraint) {
+    constraints.insert(constraint);
+
+    for (auto& eqs : equation_sets) {
+        for (auto& var : eqs->get_variables()) {
+            var->equations.clear();
+        }
+        delete eqs;
+    }
+    equation_sets.clear();
+
+    auto eqn_set = new EquationSet{};
+    equation_sets.insert(eqn_set);
+    // equation_sets = {eqn_set};
+
+    for (auto& constraint : constraints) {
+        for (auto& eq : constraint->get_equations()) {
+            eqn_set->add_equation(*eq);
+        }
+    }
+
+    // for (auto& eq : constraint->get_equations()) {
+    //     equations.push_back(std::move(eq));
+    //     auto eq2 = &equations.back();
+
+    //     for (auto& var : eq2->variables) {
+    //         add_variable(var);
+    //     }
+
+    //     bool added = false;
+    //     for (auto& eqn_set : equation_sets) {
+    //         if (!eqn_set->is_constrained()) {
+    //             eqn_set->add_equation(*eq2);
+    //             added = true;
+    //         }
+    //     }
+    //     if (!added) {
+    //         auto eqn_set = new EquationSet{};
+    //         equation_sets.insert(eqn_set);
+    //         eqn_set->add_equation(*eq2);
+    //         added = true;
+    //     }
+    // }
+
+    split();
+    solve();
+
+    return true;
+}
+
+bool gcs::Problem::add_geometry(Geometry* geom) {
+    geoms.insert(geom);
+    return true;
+}
+
 void gcs::Problem::split() {
     auto old_equation_sets = equation_sets;
-    equation_sets = {};
-    prereqs = {};
-    is_prereq_of = {};
+    equation_sets.clear();
+    prereqs.clear();
+    is_prereq_of.clear();
 
     for (auto& eq : old_equation_sets) {
         auto split_sets = gcs::split(*eq);
@@ -86,7 +161,12 @@ void gcs::Problem::split() {
                 // eq needs var to be calculated in order to be solvable
                 // so the eqn set that uses eq has this eqn set as a dep
                 auto dep_eqn_set = containing_set[eq];
+                assert(eqn_set->equations.find(eq) == eqn_set->equations.end());
                 assert(dep_eqn_set != eqn_set);
+
+                // if (dep_eqn_set == eqn_set) {
+                //     continue;
+                // }
 
                 prereqs[dep_eqn_set].insert(eqn_set);
                 is_prereq_of[eqn_set].insert(dep_eqn_set);

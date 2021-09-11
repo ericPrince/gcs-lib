@@ -95,7 +95,7 @@ class EquationUsage(BaseModel):
         )
 
     def make_equation_instantiation(self, constraint: 'Constraint', functor_suffix, geom_types):
-        return '{{' + ', '.join(
+        return 'Equation{{' + ', '.join(
             [
                 f'{"&" if "." in var else ""}{var.replace(".", "->", 1)}' 
                 for var in self.get_variables(constraint, geom_types)
@@ -146,11 +146,11 @@ class ConstraintDefinition(BaseModel):
             + [
                 '    }',
                 '',
-                '    std::vector<gcs::Equation> get_equations() const {',
+                '    std::vector<gcs::Equation*> get_equations() const {',
                 # f'        return {{{", ".join([eqn.make_equation_instantiation(self, geom_types) for eqn in self.equations])}}};'
-                '        std::vector<gcs::Equation> eqns{};',
+                '        std::vector<gcs::Equation*> eqns{};',
                 '',
-                '\n'.join([f'        eqns.push_back({eqn.make_equation_instantiation(self, str(i), geom_types)});' for i, eqn in enumerate(self.equations)]),
+                '\n'.join([f'        eqns.push_back(new {eqn.make_equation_instantiation(self, str(i), geom_types)});' for i, eqn in enumerate(self.equations)]),
                 '',
                 '        return eqns;',
                 '    }',
