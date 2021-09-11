@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "gcs/basic/constraints.h"
+#include "gcs/basic/basic.h"
 #include "gcs/core/core.h"
 #include "gcs/g2d/g2d.h"
 
