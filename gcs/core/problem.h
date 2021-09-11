@@ -47,6 +47,8 @@ struct Problem {
 
     ~Problem();
 
+    void reset_to_single_equation_set();
+
     void split();
 
     void solve(size_t pool_size = 0);

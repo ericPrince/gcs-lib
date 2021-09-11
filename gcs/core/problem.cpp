@@ -68,23 +68,7 @@ bool gcs::Problem::add_variable(Variable* var) {
 bool gcs::Problem::add_constraint(Constraint* constraint) {
     constraints.insert(constraint);
 
-    for (auto& eqs : equation_sets) {
-        for (auto& var : eqs->get_variables()) {
-            var->equations.clear();
-        }
-        delete eqs;
-    }
-    equation_sets.clear();
-
-    auto eqn_set = new EquationSet{};
-    equation_sets.insert(eqn_set);
-    // equation_sets = {eqn_set};
-
-    for (auto& constraint : constraints) {
-        for (auto& eq : constraint->get_equations()) {
-            eqn_set->add_equation(*eq);
-        }
-    }
+    reset_to_single_equation_set();
 
     // for (auto& eq : constraint->get_equations()) {
     //     equations.push_back(std::move(eq));
@@ -118,6 +102,63 @@ bool gcs::Problem::add_constraint(Constraint* constraint) {
 bool gcs::Problem::add_geometry(Geometry* geom) {
     geoms.insert(geom);
     return true;
+}
+
+template <>
+bool gcs::Problem::remove(Variable* var) {
+    return remove_variable(var);
+}
+
+template <>
+bool gcs::Problem::remove(Constraint* constraint) {
+    return remove_constraint(constraint);
+}
+
+template <>
+bool gcs::Problem::remove(Geometry* geom) {
+    // TODO: remove all constraints that use this geometry
+    return remove_geometry(geom);
+}
+
+bool gcs::Problem::remove_variable(Variable* var) {
+    variables.erase(var);
+    // TODO: remove all constraints that use this variable
+    return true;
+}
+
+bool gcs::Problem::remove_constraint(Constraint* constraint) {
+    constraints.erase(constraint);
+    reset_to_single_equation_set();
+    split();
+    solve();
+    return true;
+}
+
+bool gcs::Problem::remove_geometry(Geometry* geom) {
+    geoms.erase(geom);
+    return true;
+}
+
+void gcs::Problem::reset_to_single_equation_set() {
+    for (auto& eqs : equation_sets) {
+        for (auto& var : eqs->get_variables()) {
+            var->equations.clear();
+        }
+        delete eqs;
+    }
+    equation_sets.clear();
+
+    auto eqn_set = new EquationSet{};
+    equation_sets.insert(eqn_set);
+
+    for (auto& constraint : constraints) {
+        for (auto& eq : constraint->get_equations()) {
+            eqn_set->add_equation(*eq);
+        }
+    }
+    prereqs.clear();
+    prereqs.emplace(eqn_set, decltype(prereqs)::mapped_type{});
+    is_prereq_of.emplace(eqn_set, decltype(is_prereq_of)::mapped_type{});
 }
 
 void gcs::Problem::split() {
