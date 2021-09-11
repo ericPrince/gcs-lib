@@ -14,7 +14,9 @@ namespace gcs {
 struct Constraint {
     // virtual std::vector<Equation> get_equations() = 0;  // TODO
 
-    virtual void add_cost_function(ceres::Problem& problem) = 0;
+    virtual void add_to_problem(ceres::Problem& problem) = 0;
+
+    virtual std::vector<gcs::Equation*> get_equations() const = 0;
 };
 
 #ifndef CSTR_CREATE_FUNCTOR_
@@ -47,66 +49,6 @@ ceres::CostFunction* create_scalar_autodiff(Functor* functor) {
 
     return detail::create_ad_impl_(functor, param_list{});
 }
-
-struct set_const_functor {
-    double const_value;
-
-    static const metal::int_ num_params = 1;
-
-    template <typename T>
-    bool operator()(const T* x, T* residual) const {
-        *residual = T{*x} - const_value;
-        return true;
-    }
-};
-
-struct SetConstant : Constraint {
-    Variable* v;
-    double value;
-    Equation eqn;
-
-    SetConstant(Variable& v, double value) : v{&v}, value{value}, eqn{{&v}} {}
-
-    void add_cost_function(ceres::Problem& problem);
-};
-
-//! @brief Set two values to equal
-template <typename T>
-T equate(const T& x1, const T& x2) {
-    return x1 - x2;
-}
-
-CSTR_CREATE_FUNCTOR_(equate, 2);
-
-struct Equate : Constraint {
-    Variable* v1;
-    Variable* v2;
-    Equation eqn;
-
-    Equate(Variable& v1, Variable& v2) : v1{&v1}, v2{&v2}, eqn{{&v1, &v2}} {}
-
-    void add_cost_function(ceres::Problem& problem);
-};
-
-//! @brief Set the difference between 2 values
-template <typename T>
-T difference(const T& x1, const T& x2, const T& d) {
-    return ceres::abs(x1 - x2) - d;
-}
-
-CSTR_CREATE_FUNCTOR_(difference, 3);
-
-struct Difference : Constraint {
-    Variable* v1;
-    Variable* v2;
-    Variable* d;
-    Equation eqn;
-
-    Difference(Variable& v1, Variable& v2, Variable& d)
-        : v1{&v1}, v2{&v2}, d{&d}, eqn{{&v1, &v2, &d}} {}
-
-    void add_cost_function(ceres::Problem& problem);
-};
 
 }  // namespace gcs
 

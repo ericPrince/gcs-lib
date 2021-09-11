@@ -1,7 +1,6 @@
-#include <ceres/ceres.h>
-
 #include <iostream>
 
+#include "gcs/basic/basic.h"
 #include "gcs/core/core.h"
 #include "gcs/g2d/g2d.h"
 
@@ -28,44 +27,48 @@ int main(int argc, char** argv) {
 
     std::vector<gcs::Constraint*> constraints = {};
 
-    constraints.push_back(new gcs::SetConstant{p1.x, 0.0});      // f1
-    constraints.push_back(new gcs::SetConstant{p1.y, 0.0});      // f2
-    constraints.push_back(new gcs::SetConstant{c1.r, r0});       // f3
-    constraints.push_back(new gcs::SetConstant{d1, d});          // f4
-    constraints.push_back(new gcs::SetConstant{a1, a});          // f5
-    constraints.push_back(new gcs::Equate{p0.x, c1.p.x});        // f6
-    constraints.push_back(new gcs::Equate{p0.y, c1.p.y});        // f7
-    constraints.push_back(new gcs::Difference{p0.x, p1.x, dx});  // f8
-    constraints.push_back(new gcs::Difference{p0.y, p1.y, dy});  // f9
+    constraints.push_back(new gcs::basic::SetConstant{p1.x, 0.0});      // f1
+    constraints.push_back(new gcs::basic::SetConstant{p1.y, 0.0});      // f2
+    constraints.push_back(new gcs::basic::SetConstant{c1.radius, r0});  // f3
+    constraints.push_back(new gcs::basic::SetConstant{d1, d});          // f4
+    constraints.push_back(new gcs::basic::SetConstant{a1, a});          // f5
+    constraints.push_back(new gcs::basic::Equate{p0.x, c1.center.x});   // f6
+    constraints.push_back(new gcs::basic::Equate{p0.y, c1.center.y});   // f7
+    constraints.push_back(new gcs::basic::Difference{p0.x, p1.x, dx});  // f8
+    constraints.push_back(new gcs::basic::Difference{p0.y, p1.y, dy});  // f9
     constraints.push_back(
         new gcs::g2d::AngleThreePoints{p1, p3, p2, a1});             // f10
     constraints.push_back(new gcs::g2d::TangentLineCircle{L1, c1});  // f11
     constraints.push_back(new gcs::g2d::PointOnCircle{p3, c1});      // f12
-    constraints.push_back(new gcs::Equate{L1.p1.x, p3.x});           // f13
-    constraints.push_back(new gcs::Equate{L1.p1.y, p3.y});           // f14
+    constraints.push_back(new gcs::basic::Equate{L1.p1.x, p3.x});    // f13
+    constraints.push_back(new gcs::basic::Equate{L1.p1.y, p3.y});    // f14
     constraints.push_back(new gcs::g2d::LineLength{L1, d1});         // f15
-    constraints.push_back(new gcs::Equate{L1.p2.x, p2.x});           // f16
-    constraints.push_back(new gcs::Equate{L1.p2.y, p2.y});           // f17
-    constraints.push_back(new gcs::SetConstant{dx, d_x});            // f18
-    constraints.push_back(new gcs::SetConstant{dy, d_y});            // f19
+    constraints.push_back(new gcs::basic::Equate{L1.p2.x, p2.x});    // f16
+    constraints.push_back(new gcs::basic::Equate{L1.p2.y, p2.y});    // f17
+    constraints.push_back(new gcs::basic::SetConstant{dx, d_x});     // f18
+    constraints.push_back(new gcs::basic::SetConstant{dy, d_y});     // f19
 
-    ceres::Problem problem{};
+    // make problem, split, and solve
+    gcs::Problem gcs_problem{};
 
     for (auto& constraint : constraints) {
-        constraint->add_cost_function(problem);
+        gcs_problem.add(constraint);
     }
 
-    ceres::Solver::Options options{};
-    options.linear_solver_type = ceres::LinearSolverType::DENSE_QR;
-    options.minimizer_progress_to_stdout = true;
+    gcs_problem.split();
+    std::cout << "Split using GcsProblem: " << gcs_problem.equation_sets.size()
+              << std::endl
+              << std::flush;
 
-    ceres::Solver::Summary summary;
-    Solve(options, &problem, &summary);
+    gcs_problem.solve();
 
-    std::cout << summary.BriefReport() << std::endl;
     std::cout << "p2.x: " << p2.x.value << std::endl;
     std::cout << "p2.y: " << p2.y.value << std::endl;
     std::cout << "p3.x: " << p3.x.value << std::endl;
     std::cout << "p3.y: " << p3.y.value << std::endl;
-    std::cout << "c1.r:  " << c1.r.value << std::endl;
+    std::cout << "c1.r:  " << c1.radius.value << std::endl;
+
+    for (auto& cstr : constraints) {
+        gcs_problem.remove(cstr);
+    }
 }

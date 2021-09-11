@@ -14,7 +14,6 @@ cc_library(
     include_prefix = "gcs/g2d/",
     deps = [
         "//gcs/core",
-        "@com_github_boostorg_preprocessor//:boost-preprocessor",
         "@com_github_brunocodutra_metal//:metal",
         "@com_github_ceres-solver_ceres-solver//:ceres",
     ],

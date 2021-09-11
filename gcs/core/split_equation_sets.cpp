@@ -94,6 +94,7 @@ std::vector<EquationSet> split(EquationSet& equation_set) {
     // TODO: unconstrained set could be last thing popped from pq (unless move
     // happened last)
     if (!unconstrained_equation_set.equations.empty()) {
+        unconstrained_equation_set.set_solved();
         solve_sets.push_back(std::move(unconstrained_equation_set));
     }
 

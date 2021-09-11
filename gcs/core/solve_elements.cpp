@@ -16,7 +16,8 @@ void Variable::set_solved() {
 // Equation
 
 Equation::Equation(Equation&& equation)
-    : variables{std::move(equation.variables)} {
+    : variables{std::move(equation.variables)},
+      make_residual_ftor{std::move(equation.make_residual_ftor)} {
     for (auto& var : this->variables) {
         var->equations.erase(&equation);
     }
@@ -24,11 +25,15 @@ Equation::Equation(Equation&& equation)
     this->init();
 }
 
-Equation::Equation(const decltype(variables)& vars) : variables{vars} {
+Equation::Equation(const decltype(variables)& vars,
+                   decltype(make_residual_ftor) make_residual_ftor)
+    : variables{vars}, make_residual_ftor{make_residual_ftor} {
     this->init();
 }
 
-Equation::Equation(decltype(variables)&& vars) : variables{vars} {
+Equation::Equation(decltype(variables)&& vars,
+                   decltype(make_residual_ftor) make_residual_ftor)
+    : variables{vars}, make_residual_ftor{make_residual_ftor} {
     this->init();
 }
 
@@ -40,6 +45,12 @@ void Equation::init() {
 }
 
 // EquationSet
+
+EquationSet::~EquationSet() {
+    // for (auto& eq : equations) {
+    //     delete eq;
+    // }
+}
 
 bool EquationSet::Compare::operator()(const EquationSet& a,
                                       const EquationSet& b) {
@@ -59,21 +70,7 @@ bool EquationSet::Compare::operator()(const EquationSet& a,
 }
 
 bool EquationSet::operator==(const EquationSet& other) const {
-    if (this->equations.size() != other.equations.size()) {
-        return false;
-    }
-
-    auto it_a = this->equations.begin();
-    auto it_b = other.equations.begin();
-
-    for (; it_a != this->equations.end(), it_b != other.equations.end();
-         ++it_a, ++it_b) {
-        if (*it_a != *it_b) {
-            return false;
-        }
-    }
-
-    return true;
+    return this->equations == other.equations;
 }
 
 EquationSet& EquationSet::add_equation(Equation& equation) {
@@ -153,8 +150,10 @@ size_t std::hash<gcs::EquationSet>::operator()(
 
     std::size_t seed = eqn_set.equations.size();
     for (auto& eqn : eqn_set.equations) {
-        seed ^= reinterpret_cast<size_t>(eqn) + 0x9e3779b9 + (seed << 6) +
-                (seed >> 2);
+        seed ^= reinterpret_cast<size_t>(eqn);
+        // // TODO: old hash function was dependent on random order of iteration
+        // seed ^= reinterpret_cast<size_t>(eqn) + 0x9e3779b9 + (seed << 6) +
+        //         (seed >> 2);
     }
     return seed;
 };
