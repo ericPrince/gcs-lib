@@ -22,3 +22,5 @@
 .bazelversion
 # User-specific .bazelrc
 user.bazelrc
+# automated doxygen build
+/doxygen-build

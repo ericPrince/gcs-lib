@@ -11,14 +11,24 @@
 
 namespace gcs {
 
+//! Definition of a constraint
+//!
+//! Constraint is a higher level class that may add multiple equations to be
+//! solved.
 struct Constraint {
     // virtual std::vector<Equation> get_equations() = 0;  // TODO
 
+    //! Add equations to a ceres Problem
     virtual void add_to_problem(ceres::Problem& problem) = 0;
 
+    //! Makes new equations based on the definition of this constraint
+    //!
+    //! @returns A vector of equations, which the caller is given ownership of
+    //! @see gcs::Equation
     virtual std::vector<gcs::Equation*> get_equations() const = 0;
 };
 
+//! A macro that creates constraint functors
 #ifndef CSTR_CREATE_FUNCTOR_
 #define CSTR_CREATE_FUNCTOR_(func, n)                          \
     struct func##_functor {                                    \
@@ -42,6 +52,12 @@ ceres::CostFunction* create_ad_impl_(Functor* functor, metal::list<Args...>) {
 
 }  // namespace detail
 
+//! Creates a ceres CostFunction from a properly implemented functor
+//!
+//! @param functor a properly implemented functor, such as one made from
+//! CSTR_CREATE_FUNCTOR_
+//! @returns a ceres AutoDiffCostFunction where each parameter block has size 1
+//! and the residual block has size 1
 template <typename Functor>
 ceres::CostFunction* create_scalar_autodiff(Functor* functor) {
     using param_list =
